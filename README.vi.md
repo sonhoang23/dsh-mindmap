@@ -18,6 +18,12 @@
 
 ---
 
+## DSH Mindmap trong thực tế
+
+![Sơ đồ tư duy Topic Taxonomy thực tế được hiển thị bằng DSH Mindmap](./assets/topic-taxonomy-mindmap.webp)
+
+*Topic Taxonomy — sơ đồ tư duy thực tế được kết xuất từ Markdown. Ảnh thể hiện kết quả mindmap, không phải toàn bộ giao diện DSH Web.*
+
 ## Vì sao nên dùng DSH Mindmap?
 
 **Tư duy bằng hình ảnh, lưu trữ bằng Markdown.** DSH Mindmap giúp bạn khám phá cấu trúc ghi chú, ý tưởng hay dự án mà không phải chuyển dữ liệu sang định dạng riêng.
@@ -76,7 +82,7 @@ mindmap
 
 File Markdown không đánh dấu vẫn dùng trình xem mặc định. Hiện chế độ tự nhận diện yêu cầu `markmap: true`; riêng cấu hình dạng object `markmap:` **chưa đủ để tự kích hoạt**. Bạn vẫn có thể mở thủ công.
 
-**Ảnh/GIF demo thực tế:** chưa được thêm. Xem [hướng dẫn chuẩn bị asset](./assets/README.md) để bổ sung hình ảnh xác thực từ DSH Web.
+**GIF hướng dẫn thao tác:** hiện chưa có. Xem [hướng dẫn chuẩn bị asset](./assets/README.md) để quay GIF thực tế từ DSH Web.
 
 ## Bắt đầu nhanh
 

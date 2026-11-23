@@ -18,6 +18,12 @@
 
 ---
 
+## See DSH Mindmap in action
+
+![A real Topic Taxonomy mind map rendered with DSH Mindmap](./assets/topic-taxonomy-mindmap.webp)
+
+*Topic Taxonomy — a real-world mind map rendered from Markdown. This image shows the map output, not the full DSH Web interface.*
+
 ## Why DSH Mindmap?
 
 **Think visually. Keep working in Markdown.** DSH Mindmap makes it easier to explore a hierarchy of notes, ideas, or project structure without converting your documents into a proprietary format.
@@ -76,7 +82,7 @@ mindmap
 
 Unmarked Markdown files continue to use Better Sidebar's regular viewer by default. Automatic detection currently recognizes the explicit `markmap: true` marker; a structured `markmap:` options object alone does **not** opt a file into automatic opening. You can still open it manually.
 
-**Real product screenshots / GIF:** not included yet. See [demo asset guidance](./assets/README.md) to capture verified images from a running DSH Web session.
+**Animated walkthrough:** not yet available. See [demo asset guidance](./assets/README.md) for how to capture a verified GIF from DSH Web.
 
 ## Quick start
 
