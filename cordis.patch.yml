@@ -1,0 +1,4 @@
+# Installs the host half. The client half is declared in package.json/dsh.client.
+- insert:
+    - id: dsh-mindmap
+      name: dsh-mindmap
