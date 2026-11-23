@@ -56,6 +56,7 @@ The code-level gate cannot prove host compatibility. After `pnpm run check`, ver
 - [ ] Simulated stale modification time rejects an overwrite.
 - [ ] Markdown, SVG and PNG exports work.
 - [ ] Sidebar resize, split view, light/dark themes and reload behave acceptably.
+- [ ] For touch and narrow panels, follow the [mobile acceptance checklist](./mobile-testing.md).
 - [ ] Plugin disable/reload removes registrations without residual UI.
 
 The previous README recorded this live acceptance as **pending**, not passed.
