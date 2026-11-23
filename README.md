@@ -1,101 +1,40 @@
-# DSH Mindmap
+<div align="center">
+  <img src="./src/assets/icon.svg" width="76" alt="DSH Mindmap icon" />
+  <h1>DSH Mindmap</h1>
+  <p><strong>Turn Markdown into interactive mind maps — inside DeepSeek Harness.</strong></p>
+  <p>A Markdown-first, open-source plugin for DSH Web and Better Sidebar.<br />Your <code>.md</code> file stays the source of truth.</p>
+  <p>
+    <a href="#quick-start">Get started</a> ·
+    <a href="#how-it-works">See how it works</a> ·
+    <a href="#documentation">Documentation</a> ·
+    <a href="./README.vi.md">Tiếng Việt</a>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/status-experimental-444444" alt="Status: experimental" />
+    <img src="https://img.shields.io/badge/version-0.1.5-777777" alt="Version: 0.1.5" />
+    <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="License: MIT" /></a>
+  </p>
+</div>
 
-## v0.1.5: fix `ReferenceError: module is not defined`
+---
 
-The DSH Plugins page may show `dsh-mindmap: ReferenceError: module is not defined` after enabling v0.1.4. The browser module itself was registered, but its generated CommonJS factory referenced `module.exports` without a guaranteed local `module` variable.
+## Why DSH Mindmap?
 
-The v0.1.4 bundle put `module` and `exports` in Rolldown's pre-minify `intro`, but placed the surrounding DSH factory in `postBanner` and `postFooter` (after minification). The `intro` variable can therefore disappear from the resulting bundle.
+**Think visually. Keep working in Markdown.** DSH Mindmap makes it easier to explore a hierarchy of notes, ideas, or project structure without converting your documents into a proprietary format.
 
-**v0.1.5** places `var module = { exports: {} }; var exports = module.exports;` directly in the post-minify factory prefix, ahead of any bundled JavaScript. The post-build audit now also requires this prefix, in addition to verifying the DSH registration and blocking Node-only imports.
+- **Markdown-first** — use ordinary `.md` / `.markdown` files; no separate map file to maintain.
+- **Integrated with Better Sidebar** — view a marked file automatically, or open any Markdown file as a mind map on demand.
+- **Two views, one draft** — switch between an interactive map and an editable Markdown panel.
+- **Navigation & layouts** — zoom, pan, expand/collapse branches, and choose Document, Tree, Two-sided or Org chart layout.
+- **Export** — download Markdown, SVG or PNG.
+- **Guarded saves** — writes go through Better Sidebar's authenticated, session-scoped routes with modification-time conflict checks.
 
-After safely synchronizing your local Git commits with `origin/main`, rebuild the plugin:
+> [!IMPORTANT]
+> **Experimental (v0.1.5).** Live end-to-end verification in a DSH Web profile is not yet recorded as complete. This repository contains source code; cloning it does **not** automatically install the plugin.
 
-```powershell
-cd 'C:\path\to\dsh-mindmap'
-pnpm install
-pnpm run check
-```
+## How it works
 
-Only if `pnpm run check` succeeds:
-
-```powershell
-dsh plugin --profile web add .
-dsh plugin --profile web install
-```
-
-Restart DSH Web completely, hard-refresh the browser (`Ctrl+Shift+R`), and confirm the Plugins page shows **v0.1.5** with no red client-module error. Then reopen `knowledge/knowledge_queue/topic-taxonomy-mindmap.md` and verify the full-height canvas.
-
-This fix has been committed, but a live browser run using your DSH profile remains to be validated.
-
-
-## Full-height Better Sidebar canvas — v0.1.4
-
-When viewing a large taxonomy mindmap inside Better Sidebar, older releases could render the white map surface only about 400px high, leaving most of the sidebar empty. The Markmap web component has an internal `:host { height: 400px }` default, and percent heights on an unconstrained flex child did not replace that intrinsic limit reliably.
-
-v0.1.4 makes the viewer a **flex-filling child of Better Sidebar's editorMain**, reserves only the toolbar height, and positions `<markmap-view>` absolutely inside the remaining viewport with an explicit inline `height: 100%`. Both Mindmap and Markdown editor now fill the available viewport. A `ResizeObserver` watches the element and calls `mm.fit()` when the sidebar or split-pane viewport changes.
-
-The fix is confined to `src/client/preview.tsx`; **it does not change Better Sidebar** or any Markdown source file.
-
-### Smoke test
-
-1. Update your local plugin checkout without dropping local changes, then run `pnpm run check` from the repository root.
-2. Re-install the linked package for your DSH Web profile, restart DSH Web, and reload the browser. Confirm Plugin Manager shows **v0.1.4**.
-3. Open `knowledge/knowledge_queue/topic-taxonomy-mindmap.md`. Its map background should fill **the entire panel below the viewer toolbar**, not stop around 400px from the top.
-4. Resize the right sidebar and toggle the split-pane/maximize controls; the mindmap should fit its updated viewport.
-5. Switch to Markdown and confirm the text editor fills the panel too; ordinary unmarked `.md` files must still use Better Sidebar's original viewer.
-
-Live DSH browser acceptance is not yet verified by this repository commit alone.
-
-
-## Fix for "wrong DSH client module id" (v0.1.3)
-
-The v0.1.2 `pnpm run check` command could finish TypeScript, unit tests and the client build, then fail its last audit with `wrong DSH client module id`.
-
-**Cause:** the bundle used executable `banner` and `footer` around a minified CJS output. Rolldown documents that these sections may be stripped during minification, which can remove the DSH loader registration itself.
-
-**Fix in v0.1.3:** use Rolldown `postBanner` / `postFooter` so the loader wrapper is inserted after minification. The post-build audit now evaluates the generated script against an isolated fake `window.__ModuleLoader__` to verify that exactly one factory registers under the exact `dsh-mindmap` id. It does not just search for a quoted string.
-
-Run the targeted check **from the mindmap plugin directory**, rather than a whole-workspace fork build:
-
-```powershell
-cd 'C:\path\to\dsh-mindmap'
-git status -sb
-git fetch origin
-# If your working tree is clean, merge the new remote commits:
-git merge origin/main
-cd 'C:\path\to\dsh-mindmap'
-pnpm install
-pnpm run check
-```
-
-Expected final line:
-
-```text
-[dsh-mindmap] browser bundle verified: id=dsh-mindmap, one valid factory, no Node builtins or unregistered module-table imports
-```
-
-Only after that command passes, reinstall the linked plugin with `dsh plugin --profile web add .` and `dsh plugin --profile web install`, then restart DSH Web and hard-refresh the browser. The plugin manager should show **v0.1.3**.
-
-The separate `scripts/build-forks.ps1` message `3 plugin build(s) failed` counts failures across the workspace; it does not mean three failures in this plugin. Diagnose other plugin builds separately, without relaxing the mindmap browser audit.
-
-This release has not yet passed a user DSH browser smoke test.
-
-
-Markdown-first interactive mindmaps inside DeepSeek Harness (DSH) and Better Sidebar. The single Markdown file remains the source of truth.
-
-**Status: experimental implementation.** Live DSH profile and browser acceptance remain unverified. **Committing this source to GitHub does NOT install it into your local DSH profile.**
-
-## User experience
-
-1. Click a .md or .markdown file in Better Sidebar.
-   - When the YAML frontmatter begins with `markmap: true`, DSH Mindmap automatically shows the interactive mindmap.
-   - All other Markdown files keep the existing Better Sidebar viewer/editor.
-2. Right-click any Markdown file and choose **View as Mindmap**, or use the **Mindmap** action in the editor toolbar. This opens a dedicated Mindmap tab.
-3. A second lower-priority viewer is registered for **Open With -> Mindmap** where the Better Sidebar UI exposes it.
-4. Switch between **Mindmap** and **Markdown** within the view. The Markdown tab is editable; your draft feeds the visual map immediately on return.
-5. Save through Better Sidebar's authenticated, session-scoped, mtime-conflict-checked file route. Export Markdown, SVG or PNG.
-
-## Example file
+Add the `markmap: true` frontmatter to a Markdown document:
 
 ```markdown
 ---
@@ -103,168 +42,100 @@ markmap: true
 ---
 
 # DeepSeek Harness
-## Model
+
+## Models
 - DeepSeek
 - Kimi
+
 ## Tools
 - Files
 - Search
+
 ## Plugins
 - Better Sidebar
 - DSH Mindmap
 ```
 
-Markmap also supports native structured options:
+Better Sidebar opens that file with the interactive mind-map viewer. The following diagram **illustrates the example structure**; it is not a screenshot of the plugin UI:
 
-```yaml
----
-markmap:
-  theme: cards
-  layout: two-sided
----
+```mermaid
+mindmap
+  root((DeepSeek Harness))
+    Models
+      DeepSeek
+      Kimi
+    Tools
+      Files
+      Search
+    Plugins
+      Better Sidebar
+      DSH Mindmap
 ```
 
-Automatic detection accepts both the explicit Boolean marker and Markmap's native options object. The plugin selects Markdown by extension, inspects the loaded body and delegates ordinary Markdown to the original Better Sidebar viewer. This avoids relying on optional sniff bytes.
+**Want to map an existing Markdown file?** Right-click a `.md` / `.markdown` file in Better Sidebar and choose **View as Mindmap**, or use **Mindmap** from an editor action. An **Open With → Mindmap** choice may also appear, depending on the Better Sidebar UI.
 
-## Browser bundle update: version 0.1.2
+Unmarked Markdown files continue to use Better Sidebar's regular viewer by default. Automatic detection currently recognizes the explicit `markmap: true` marker; a structured `markmap:` options object alone does **not** opt a file into automatic opening. You can still open it manually.
 
-Version **0.1.2** resolves the Markmap dependency graph for browsers, including `vfile`'s upstream `#minpath`, `#minproc`, `#minurl` browser implementations, a maintained `buffer` polyfill, and a browser-targeted client bundle.
+**Real product screenshots / GIF:** not included yet. See [demo asset guidance](./assets/README.md) to capture verified images from a running DSH Web session.
 
-The bundle now has an automated build gate (`node scripts/check-client-bundle.mjs`) and a focused GitHub Actions workflow (`.github/workflows/dsh-mindmap.yml`) running `pnpm run check`. **The checks still need to pass in your DSH checkout before activation can be considered verified.**
+## Quick start
 
-For the specific build error `dsh-mindmap browser bundle imports Node builtin "process"`, `"buffer"` or `"node:url"`:
+**Requirements:** Node.js **24.9+**, pnpm, DSH Web **>=0.2.2-0 <0.3.0**, and a compatible **dsh-better-sidebar 0.32.x** installation (peer dependency: `^0.32.1`).
 
-```powershell
-cd 'C:\path\to\dsh-mindmap'
-git status -sb
-git fetch origin
-# If the worktree is clean and the branch diverged: git merge origin/main
-cd 'C:\path\to\dsh-mindmap'
+```bash
+git clone https://github.com/sonhoang23/dsh-mindmap.git
+cd dsh-mindmap
 pnpm install
 pnpm run check
 ```
 
-**Do not reinstall or restart DSH when `pnpm run check` fails.** Send the complete first build error. The bundle audit must finish with `[dsh-mindmap] browser bundle verified`. Only then run `dsh plugin --profile web add .` and `dsh plugin --profile web install`, fully restart DSH Web, and hard-refresh the browser. Plugin Manager should show v0.1.2 after the reinstall.
+**Only if all checks pass**, register the local source package in your DSH Web profile:
 
-### Earlier node:process issue
-
-#### Browser error: `require('node:process')` is not in the DSH module table
-
-**Superseded by v0.1.2.** The earlier v0.1.1 process-only fix was insufficient: vfile and other Markdown utilities also resolve Node paths and Buffer imports in some bundle configurations.
-
-This is a browser bundle error, not a frontmatter problem: the client bundle is attempting to load a Node-only module. The DSH browser module loader cannot provide `node:process`. Do **not** add Node.js builtins to the DSH module table or disable its checks.
-
-After safely bringing local Git history up to date (see below), build **in the plugin directory**:
-
-```powershell
-cd 'C:\path\to\dsh-mindmap'
-pnpm install
-pnpm run check
-```
-
-The build must end with:
-
-```text
-[dsh-mindmap] browser bundle verified: no Node builtins or unregistered module-table imports
-```
-
-Then reconcile the linked package in your Web profile:
-
-```powershell
+```bash
 dsh plugin --profile web add .
 dsh plugin --profile web install
 ```
 
-Shut down DSH Web completely, start it again, and hard-refresh the browser (Ctrl+Shift+R). Plugin Manager should show **DSH Mindmap v0.1.2**. If the post-build audit fails, that build is **not ready to enable**; preserve the first error message and its dependency name to correct the browser entry rather than bypassing the audit.
+Fully restart DSH Web and hard-refresh the browser. Then open a Markdown file containing `markmap: true`.
 
-This source fix has **not yet been validated by a live DSH Web run**. Installing a linked package without rebuilding leaves the old `lib/client.js` in place.
+> This package is currently marked `private: true`. These are **source-install instructions**, not an npm registry installation command. See the [complete installation guide](./docs/installation.md) for compatibility checks, updates and verification.
 
-## Troubleshooting on Windows: `Package unavailable`, TypeScript, and Git divergence
+## Use it
 
-These are separate issues. Solve in order; an `allow-version --accept-risk` exemption is **not** a safe replacement for compatible DSH and Better Sidebar releases.
+| Action | How |
+| --- | --- |
+| Auto-open a map | Put `markmap: true` in YAML frontmatter and open the Markdown file |
+| Open manually | Better Sidebar file menu → **View as Mindmap** |
+| Edit | Select **Markdown** in the viewer toolbar |
+| Return to map | Select **Mindmap**; it uses the current in-memory draft |
+| Change layout | Choose **Document**, **Tree**, **Two-sided** or **Org chart** |
+| Save | Click **Lưu** (Save); the plugin checks for an external modification before writing |
+| Export | Use **MD ↓**, **SVG ↓** or **PNG ↓** |
 
-### 1. Reconcile your existing plugin checkout without losing local commits
+Changes in the Markdown editor are **not saved automatically**. Exporting Markdown downloads the current draft; use **Lưu** to persist changes to the source file.
 
-The reported `git pull --ff-only origin main` aborted because local `main` and `origin/main` diverged. The old command cannot be repeated until history is reconciled. Inspect first:
+## Compatibility
 
-```powershell
-cd 'C:\path\to\dsh-mindmap'
-git status -sb
-git fetch origin
-git log --oneline --left-right HEAD...origin/main
-```
+| Component | Requirement |
+| --- | --- |
+| DSH | `>=0.2.2-0 <0.3.0` |
+| Better Sidebar | `^0.32.1` peer dependency |
+| Node.js | `>=24.9.0` |
+| UI | DSH Web |
+| License | [MIT](./LICENSE) |
 
-If the worktree is **clean**, use `git merge origin/main` to preserve both local and remote commits. Resolve any conflicts before proceeding. If the worktree is dirty, commit or stash the local edits first; do not reset/clean/force-pull. There is no universal conflict-free command that is safe without inspecting this output.
+This is a community plugin, not an official DeepSeek Harness release.
 
-### 2. Check the active DSH runtime before installing the plugin
+## Documentation
 
-```powershell
-dsh --version
-Get-Command dsh | Select-Object Source
-git -C 'C:\path\to\deepseek-harness' status -sb
-```
+- [Install, upgrade & verify](./docs/installation.md)
+- [Developer guide & architecture](./docs/development.md)
+- [Troubleshooting](./docs/troubleshooting.md)
+- [Release notes](./CHANGELOG.md)
+- [Vietnamese README / README tiếng Việt](./README.vi.md)
 
-Logs from 2026-11-23 show **DSH 0.2.1-rc.2**. This plugin declares `engines.dsh: >=0.2.2-0 <0.3.0`, and Better Sidebar 0.32.1 has DSH 0.2.2-rc.2 peers. Upgrade the **actual running** DSH installation to a compatible release **before** reinstalling the plugins; keep the profile backup and follow the DSH repository's source build instructions. Also check `node -v` (this plugin requires >=24.9). The bundled `@deepseek-ai/*` packages in the profile must match the updated host line.
+## Contributing
 
-Do not assume updating a GitHub checkout updates a separately installed `dsh` executable. Run `dsh --version` again after the DSH upgrade and verify its location with `Get-Command dsh`.
+Issues, reproducible bug reports and pull requests are welcome. Before submitting changes, run `pnpm run check` and, for UI changes, verify them in a compatible DSH Web profile. Please include browser-console errors and host/plugin versions when reporting failures.
 
-### 3. Build and install the plugin
-
-Once your plugin checkout is merged with `origin/main`, and the active DSH runtime is compatible:
-
-```powershell
-$plugin = 'C:\path\to\dsh-mindmap'
-cd $plugin
-pnpm install
-pnpm run check
-dsh plugin --profile web add .
-dsh plugin --profile web install
-dsh web --dump-config | Select-String 'dsh-mindmap'
-```
-
-The TypeScript `TS5097` error was corrected by enabling `allowImportingTsExtensions` in this plugin's `tsconfig.json` (build/typecheck must still be run locally). Do not attempt step 3 if step 2 still shows DSH 0.2.1-rc.2: the installer will reject the version.
-
-After successful install, fully restart DSH Web, reload the browser, and reopen `knowledge/knowledge_queue/topic-taxonomy-mindmap.md`. The Mindmap | Markdown UI should appear. If not, check the browser console and whether Better Sidebar's file menu contains **View as Mindmap**.
-
-### 4. Additional errors reported by the Web profile
-
-The logs also show unresolved official bundles (`@deepseek-ai/dsh-experimental-forge-bundle`, `@deepseek-ai/dsh-personalized-recommendations`, and `@deepseek-ai/dsh-cua-bundle`) plus stale `cordis.patch.yml` target warnings. These are **independent profile/DSH issues**, not Markmap parsing failures. After upgrading the host, inspect `dsh web --dump-config` and the profile's installed bundles; back up the profile before altering any of its patches or dependencies.
-
-## Local development
-
-Requires a compatible DSH Web 0.2.2 release candidate (Better Sidebar 0.32.1 targets 0.2.2-rc.2+), Node 24.9+, and pnpm.
-
-```powershell
-cd 'C:\path\to\dsh-mindmap'
-pnpm install
-pnpm typecheck
-pnpm test
-pnpm build
-dsh plugin --profile web add "link:<ABSOLUTE_PLUGIN_DIRECTORY>"
-dsh --profile web --dump-config
-dsh --profile web
-```
-
-Restart DSH and hard-refresh your browser.
-
-## Architecture
-
-- `src/index.ts`: host half (no direct filesystem API).
-- `src/client/index.tsx`: five Better Sidebar contributions with clean disposal: auto viewer, manual viewer, dedicated tab, file action, editor action.
-- `src/client/detect.ts`: conservative body-based frontmatter detection; normal Markdown is delegated to Better Sidebar's built-in viewer.
-- `src/client/preview.tsx`: Markmap 1.x web component, dual-mode Markdown editor, export and guarded save.
-- `tests/detect.test.ts`: regression coverage for path and opt-in detection.
-
-All workspace reads/writes use the existing Better Sidebar routes and the active session id. Do not access arbitrary filesystem URLs. When another process edits the source, a stale save must fail rather than overwrite it.
-
-## Live acceptance checklist
-
-- [ ] Unmarked Markdown still opens normally.
-- [ ] Marked Markdown automatically renders an interactive mindmap with pan, zoom and fold.
-- [ ] View as Mindmap works on any regular .md/.markdown file.
-- [ ] Mindmap and Markdown tabs share an editable draft.
-- [ ] Save persists; stale mtime edits are rejected; reload is available.
-- [ ] SVG, PNG and Markdown exports work.
-- [ ] Uninstall/reload removes registrations; light/dark modes and reverse proxy work.
-
-Next phase (not included): AI expand node, source links and in-chat maps.
+Built with [Markmap](https://markmap.js.org/) and Better Sidebar. Distributed under the [MIT License](./LICENSE).
