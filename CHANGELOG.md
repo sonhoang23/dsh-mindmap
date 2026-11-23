@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Restore mobile Level picker
+
+- Reintroduce a compact-screen **Level** selector alongside zoom and Fit controls; select a depth to fold deeper branches, or **All** to expand everything.
+- Derive available levels from the Markmap render tree, following the built-in toolbar behavior, instead of using a fixed range.
+- Keep the desktop Markmap toolbar unchanged. Add regression tests and mobile acceptance steps.
+- **Verification:** source and CI checks are required; iOS/Android browser acceptance remains pending.
+
+
 Release notes for DSH Mindmap. This history was consolidated from the original README on 2026-11-23. Entries describe source-level changes, not a guarantee that live DSH Web acceptance tests have passed.
 
 ## v0.1.5 — Browser module factory fix

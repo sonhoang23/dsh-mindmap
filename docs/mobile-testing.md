@@ -8,7 +8,7 @@ This document covers the compact-screen controls added in the mobile-experience 
 
 - A compact toolbar is selected by **the available panel width** (container query at 640px), not merely by the browser viewport width. This also helps narrow desktop sidebars.
 - The mobile header keeps the **Mindmap / Markdown** toggle and **Lưu** (Save) button visible; layout, reload and exports move to **⋯**.
-- While viewing a map in a narrow panel, an accessible 44px target cluster provides **−**, **Fit**, and **+** controls. Desktop retains Markmap's native toolbar.
+- In a narrow panel, an accessible control cluster provides a **Level** selector plus **−**, **Fit**, and **+**. Level choices reflect the actual rendered tree depth; **All** expands the entire map. Desktop retains Markmap's native toolbar.
 - Touch input is owned only by the map surface (`touch-action: none`); toolbars and Markdown editing retain browser touch handling. Native Markmap gestures are reused rather than replaced.
 - Small view-height changes are ignored; significant panel changes trigger a debounced fit. This limits disruption to manual pan/zoom while mobile browser chrome shifts.
 - Mobile Markdown editor uses 16px text to avoid Safari's focus-zoom behavior.
@@ -29,7 +29,7 @@ Test these interactions:
 1. No clipping or overlapping header controls; map occupies all remaining pane height.
 2. Tap Mindmap and Markdown. Open **⋯**, choose another layout, export MD/SVG/PNG and close with Escape or an outside tap.
 3. Tap and pinch the map: a one-finger pan should move nodes, two-finger gesture should zoom, tapping a branch circle should fold/unfold. The page should not be pulled while manipulating the map.
-4. Try **−**, **Fit**, **+** and **Mở tất cả nhánh**. The native Markmap toolbar remains available on wide panes.
+4. Try **Level** 1, 2, deeper levels (if available), and **All**; verify the expected branches fold/unfold. Then try **−**, **Fit**, **+** and **Mở tất cả nhánh**. The native Markmap Level selector remains available on wide panes.
 5. Manually zoom or pan, then reveal/hide the mobile browser address bar. A small vertical resize should **not** reset the map; an orientation change should refit after movement settles.
 6. Open Markdown and focus the editor; keyboard should not zoom text or hide the toolbar. Type, switch back to map, save, reopen and confirm the text persisted. Verify conflict protection is unchanged.
 7. Open an ordinary `.md` without `markmap: true`: it must still use Better Sidebar's original Markdown viewer.

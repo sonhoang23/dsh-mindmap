@@ -1,6 +1,7 @@
 import { createElement as h, useEffect, useRef, useState } from 'react'
 import '@markmap/element'
-import { shouldRefitView } from './mobile.ts'
+import { deepestParentLevel, shouldRefitView } from './mobile.ts'
+import type { FoldTreeNode } from './mobile.ts'
 import { toSVGString } from '@markmap/render'
 import { toPNG } from '@markmap/canvas'
 import type { BetterSidebarService } from 'dsh-better-sidebar'
@@ -16,6 +17,8 @@ interface MapEngine {
   zoomIn(): void
   zoomOut(): void
   expandAll(): void
+  foldToLevel(level: number): void
+  tree?: FoldTreeNode
 }
 
 type MapElement = HTMLElement & { markdown: string; mm?: MapEngine }
@@ -60,6 +63,8 @@ const CSS = [
   ' .dsh-mindmap-mobile-tabs button {flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
   ' .dsh-mindmap-mobile-controls {position:absolute;z-index:5;bottom:max(12px,env(safe-area-inset-bottom,0px));right:12px;display:flex;gap:4px;padding:4px;border:1px solid var(--dsw-alias-border-subtle,#8887);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));border-radius:10px;box-shadow:0 2px 10px #0002;}',
   ' .dsh-mindmap-mobile-controls button {min-width:44px;min-height:44px;font-size:18px;font-weight:600;}',
+  ' .dsh-mindmap-mobile-controls select {min-height:44px;min-width:78px;max-width:110px;box-sizing:border-box;padding:6px;border:1px solid var(--dsw-alias-border-subtle,#8887);border-radius:7px;background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));color:inherit;font:inherit;font-size:14px;touch-action:manipulation;}',
+
   ' .dsh-mindmap-editor {font-size:16px;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));}',
   ' markmap-view::part(toolbar) {display:none;}',
   '}',
@@ -153,6 +158,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
   const [feedback, setFeedback] = useState('')
   const [busyExport, setBusyExport] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [maxFoldLevel, setMaxFoldLevel] = useState(0)
   const mobileMenuRef = useRef<HTMLDivElement | null>(null)
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null)
   const mapRef = useRef<MapElement | null>(null)
@@ -168,6 +174,22 @@ export function MindmapPanel(props: MindmapPanelProps) {
   useEffect(() => {
     if (view === 'mindmap' && mapRef.current) mapRef.current.markdown = draft
   }, [view, draft])
+
+
+  // Markmap renders asynchronously. Read available fold levels from the actual
+  // rendered tree, just like its native toolbar, rather than guessing from MD.
+  useEffect(() => {
+    if (view !== 'mindmap') return
+    const element = mapRef.current
+    if (!element) return
+    const refreshLevels = () => setMaxFoldLevel(deepestParentLevel(element.mm?.tree))
+    element.addEventListener('render', refreshLevels)
+    const frame = window.requestAnimationFrame(refreshLevels)
+    return () => {
+      element.removeEventListener('render', refreshLevels)
+      window.cancelAnimationFrame(frame)
+    }
+  }, [view])
 
   // Defer refitting until a panel resize settles. Re-fitting on every
   // ResizeObserver callback resets user zoom/pan during mobile gestures.
@@ -327,6 +349,38 @@ export function MindmapPanel(props: MindmapPanelProps) {
     mm[action]()
     setMobileMenuOpen(false)
   }
+
+  // An action menu, not a persistent setting: manual node folding may change
+  // the map immediately after a Level command, so reset to the "Level" prompt.
+  const foldLevelSelect = () => h('select', {
+    title: 'Chọn Level (mức hiển thị nhánh)',
+    'aria-label': 'Chọn Level của mindmap',
+    defaultValue: '',
+    disabled: maxFoldLevel === 0,
+    onChange: (event: { target: HTMLSelectElement }) => {
+      const selected = event.target.value
+      event.target.value = ''
+      const mm = mapRef.current?.mm
+      if (!mm) {
+        setFeedback('Sơ đồ chưa sẵn sàng. Hãy thử lại khi đã hiển thị.')
+        return
+      }
+      if (selected === 'all') {
+        mm.expandAll()
+        return
+      }
+      const level = Number(selected)
+      if (selected && Number.isInteger(level) && level > 0 && level <= maxFoldLevel) {
+        mm.foldToLevel(level)
+      }
+    },
+  },
+    h('option', { value: '' }, 'Level'),
+    ...Array.from({ length: maxFoldLevel }, (_, i) =>
+      h('option', { key: i + 1, value: String(i + 1) }, 'Level ' + (i + 1))),
+    h('option', { value: 'all' }, 'All'),
+  )
+
   const mapControl = (text: string, ariaLabel: string, action: 'fit' | 'zoomIn' | 'zoomOut') =>
     button(text, () => mapAction(action), undefined, false, {
       'aria-label': ariaLabel,
@@ -398,6 +452,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
           }),
       view === 'mindmap'
         ? h('div', { className: 'dsh-mindmap-mobile-controls', role: 'group', 'aria-label': 'Điều khiển sơ đồ' },
+            foldLevelSelect(),
             mapControl('−', 'Thu nhỏ sơ đồ', 'zoomOut'),
             mapControl('⤢', 'Vừa màn hình', 'fit'),
             mapControl('+', 'Phóng to sơ đồ', 'zoomIn'),
