@@ -29,7 +29,7 @@ describe('Level selection for compact mindmap controls', () => {
     expect(deepestParentLevel({ children: [] })).toBe(0)
   })
 
-  it('offers one level when only the root has children', () => {
+  it('disables the picker when immediate children are all leaves', () => {
     expect(deepestParentLevel({
       children: [{ children: [] }, { children: [] }],
     })).toBe(0)
