@@ -1,5 +1,33 @@
 # DSH Mindmap
 
+## v0.1.5: fix `ReferenceError: module is not defined`
+
+The DSH Plugins page may show `dsh-mindmap: ReferenceError: module is not defined` after enabling v0.1.4. The browser module itself was registered, but its generated CommonJS factory referenced `module.exports` without a guaranteed local `module` variable.
+
+The v0.1.4 bundle put `module` and `exports` in Rolldown's pre-minify `intro`, but placed the surrounding DSH factory in `postBanner` and `postFooter` (after minification). The `intro` variable can therefore disappear from the resulting bundle.
+
+**v0.1.5** places `var module = { exports: {} }; var exports = module.exports;` directly in the post-minify factory prefix, ahead of any bundled JavaScript. The post-build audit now also requires this prefix, in addition to verifying the DSH registration and blocking Node-only imports.
+
+After safely synchronizing your local Git commits with `origin/main`, rebuild the plugin:
+
+```powershell
+cd 'C:\path\to\dsh-mindmap'
+pnpm install
+pnpm run check
+```
+
+Only if `pnpm run check` succeeds:
+
+```powershell
+dsh plugin --profile web add .
+dsh plugin --profile web install
+```
+
+Restart DSH Web completely, hard-refresh the browser (`Ctrl+Shift+R`), and confirm the Plugins page shows **v0.1.5** with no red client-module error. Then reopen `knowledge/knowledge_queue/topic-taxonomy-mindmap.md` and verify the full-height canvas.
+
+This fix has been committed, but a live browser run using your DSH profile remains to be validated.
+
+
 ## Full-height Better Sidebar canvas — v0.1.4
 
 When viewing a large taxonomy mindmap inside Better Sidebar, older releases could render the white map surface only about 400px high, leaving most of the sidebar empty. The Markmap web component has an internal `:host { height: 400px }` default, and percent heights on an unconstrained flex child did not replace that intrinsic limit reliably.
@@ -48,7 +76,7 @@ Expected final line:
 
 Only after that command passes, reinstall the linked plugin with `dsh plugin --profile web add .` and `dsh plugin --profile web install`, then restart DSH Web and hard-refresh the browser. The plugin manager should show **v0.1.3**.
 
-The workspace-level `scripts/build-forks.ps1` message `3 plugin build(s) failed` counts failures across the monorepo; it does not mean three failures in this plugin. Diagnose other plugin builds separately, without relaxing the mindmap browser audit.
+The separate `scripts/build-forks.ps1` message `3 plugin build(s) failed` counts failures across the workspace; it does not mean three failures in this plugin. Diagnose other plugin builds separately, without relaxing the mindmap browser audit.
 
 This release has not yet passed a user DSH browser smoke test.
 

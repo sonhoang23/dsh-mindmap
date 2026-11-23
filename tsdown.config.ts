@@ -139,8 +139,11 @@ const client: UserConfig = {
     // These are executable JS wrappers (not comments). Rolldown may strip
     // banner/footer while minifying; postBanner/postFooter run AFTER minify
     // so DSH always receives the registration function and exact package ID.
-    postBanner: 'window.__ModuleLoader__.load({ id: ' + JSON.stringify(ID) + ', factory: (require) => {',
-    intro: 'var module = { exports: {} }; var exports = module.exports;',
+    // The CJS "module"/"exports" locals MUST be created inside the
+    // post-minify factory wrapper. An "intro" runs before minification and
+    // may be removed when it appears unused in the unwrapped bundle, which
+    // leaves module.exports unresolved at DSH client activation.
+    postBanner: 'window.__ModuleLoader__.load({ id: ' + JSON.stringify(ID) + ', factory: (require) => { var module = { exports: {} }; var exports = module.exports;',
     postFooter: 'return module.exports; } });',
   },
 }

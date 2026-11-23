@@ -22,6 +22,16 @@ const nodeSpecifiers = [...new Set(
 )]
 
 const failures = []
+
+// Guard the exact regression seen in v0.1.4: the DSH registration was
+// present, but its factory threw "ReferenceError: module is not defined".
+// The post-minify wrapper must initialize CommonJS locals BEFORE bundled
+// code executes. An intro injected pre-minification is not sufficient.
+const cjsFactoryPrefix = /^\s*window\.__ModuleLoader__\.load\(\{\s*id:\s*["']dsh-mindmap["']\s*,\s*factory:\s*\(require\)\s*=>\s*\{\s*var module\s*=\s*\{\s*exports:\s*\{\s*\}\s*\}\s*;\s*var exports\s*=\s*module\.exports\s*;/
+if (!cjsFactoryPrefix.test(code)) {
+  failures.push('DSH factory must initialize module and exports inside the post-minify wrapper')
+}
+
 if (forbidden.length) failures.push('unregistered require() modules: ' + forbidden.join(', '))
 if (nodeSpecifiers.length) failures.push('Node.js specifiers still bundled: ' + nodeSpecifiers.join(', '))
 
