@@ -22,7 +22,7 @@ interface MapEngine {
   tree?: FoldTreeNode
 }
 
-type MapElement = HTMLElement & { markdown: string; mm?: MapEngine }
+type MapElement = HTMLElement & { markdown: string; options: { wrapWidth: number }; mm?: MapEngine }
 type ReadResult =
   | { kind: 'text'; content: string; mtimeMs?: number; size: number }
   | { kind: 'binary' | 'too-large'; size: number }
@@ -152,6 +152,10 @@ export function MindmapPanel(props: MindmapPanelProps) {
   const { path, scope, service, content, mtimeMs, onReload } = props
   const [view, setView] = useState<'mindmap' | 'markdown'>('mindmap')
   const [layout, setLayout] = useState<'document' | 'tree' | 'two-sided' | 'org-chart'>('document')
+  const [nodeWidth, setNodeWidth] = useState('auto')
+  const [compactPanel, setCompactPanel] = useState(() => window.innerWidth <= 640)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const wrapWidth = nodeWidth === 'auto' ? (compactPanel ? 180 : 280) : Number(nodeWidth)
   const [draft, setDraft] = useState(content)
   const [saved, setSaved] = useState(content)
   const [baseline, setBaseline] = useState(mtimeMs)
@@ -171,6 +175,21 @@ export function MindmapPanel(props: MindmapPanelProps) {
     setSaved(content)
     setBaseline(mtimeMs)
   }, [content, mtimeMs, path])
+
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    const update = () => setCompactPanel(panel.clientWidth <= 640)
+    update()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(update)
+    observer.observe(panel)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (view === 'mindmap' && mapRef.current) mapRef.current.options = { wrapWidth }
+  }, [view, wrapWidth])
 
   useEffect(() => {
     if (view === 'mindmap' && mapRef.current) mapRef.current.markdown = draft
@@ -357,6 +376,18 @@ export function MindmapPanel(props: MindmapPanelProps) {
     h('option', { value: 'two-sided' }, 'Two-sided'),
     h('option', { value: 'org-chart' }, 'Org chart'),
   )
+  const nodeWidthSelect = () => h('select', {
+    'aria-label': 'Chiều rộng node',
+    title: 'Chiều rộng node',
+    value: nodeWidth,
+    onChange: (event: { target: { value: string } }) => setNodeWidth(event.target.value),
+  },
+    h('option', { value: 'auto' }, 'Width: Auto'),
+    h('option', { value: '180' }, 'Compact (180px)'),
+    h('option', { value: '280' }, 'Normal (280px)'),
+    h('option', { value: '400' }, 'Wide (400px)'),
+    h('option', { value: '0' }, 'Unlimited'),
+  )
   const reload = () => {
     if (dirty && !window.confirm('Bỏ các thay đổi chưa lưu và nạp lại?')) return
     setMobileMenuOpen(false)
@@ -413,12 +444,13 @@ export function MindmapPanel(props: MindmapPanelProps) {
       title: ariaLabel,
     })
 
-  return h('div', { className: 'dsh-mindmap' },
+  return h('div', { className: 'dsh-mindmap', ref: panelRef },
     h('style', null, CSS),
     h('div', { className: 'dsh-mindmap-toolbar dsh-mindmap-toolbar-desktop' },
       button('Mindmap', () => switchView('mindmap'), view === 'mindmap'),
       button('Markdown', () => switchView('markdown'), view === 'markdown'),
       layoutSelect(),
+      nodeWidthSelect(),
       h('span', { className: 'dsh-mindmap-grow' }),
       button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving),
       button('Nạp lại', reload, undefined, !onReload),
@@ -446,6 +478,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
         mobileMenuOpen
           ? h('div', { className: 'dsh-mindmap-mobile-popover', role: 'group', 'aria-label': 'Tùy chọn và xuất file' },
               h('label', null, 'Bố cục', layoutSelect()),
+              h('label', null, 'Chiều rộng node', nodeWidthSelect()),
               button('Nạp lại', reload, undefined, !onReload),
               button('Xuất Markdown', () => { exportMarkdown(); setMobileMenuOpen(false) }),
               button('Xuất SVG', () => { void exportImage('svg'); setMobileMenuOpen(false) }, undefined, view !== 'mindmap' || busyExport),
