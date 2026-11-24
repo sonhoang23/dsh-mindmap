@@ -1,5 +1,6 @@
 import { createElement as h, useEffect, useRef, useState } from 'react'
 import '@markmap/element'
+import { resolveMarkdownLink } from './links.ts'
 import { deepestParentLevel, shouldRefitView } from './mobile.ts'
 import type { FoldTreeNode } from './mobile.ts'
 import { toSVGString } from '@markmap/render'
@@ -175,6 +176,31 @@ export function MindmapPanel(props: MindmapPanelProps) {
     if (view === 'mindmap' && mapRef.current) mapRef.current.markdown = draft
   }, [view, draft])
 
+
+  // Markmap uses a shadow root; composedPath exposes the original anchor.
+  // Capture before the renderer/browser can navigate to the web origin.
+  useEffect(() => {
+    if (view !== 'mindmap') return
+    const element = mapRef.current
+    if (!element) return
+    const onLink = (event: MouseEvent) => {
+      const anchor = event.composedPath().find((node): node is Element =>
+        node instanceof Element && node.localName === 'a')
+      const href = anchor?.getAttribute('href') ?? anchor?.getAttribute('xlink:href')
+      if (!href) return
+      const target = resolveMarkdownLink(path, href)
+      if (!target) return
+      event.preventDefault()
+      event.stopPropagation()
+      void readMarkdown(service, scope, target).then(() => {
+        service.openFile(scope, target)
+      }).catch(() => {
+        setFeedback('Không thể mở file: ' + target)
+      })
+    }
+    element.addEventListener('click', onLink, true)
+    return () => element.removeEventListener('click', onLink, true)
+  }, [view, path, scope.sessionId, scope.cwd, service])
 
   // Markmap renders asynchronously. Read available fold levels from the actual
   // rendered tree, just like its native toolbar, rather than guessing from MD.
