@@ -7,7 +7,7 @@ DSH Mindmap is currently an **experimental, source-installed DSH Web plugin**. T
 ## 1. Check the host environment
 
 - **DSH:** `>=0.2.2-0 <0.3.0`
-- **Better Sidebar:** compatible version satisfying peer dependency `^0.32.1`
+- **Better Sidebar (optional):** compatible version satisfying peer dependency `^0.32.1`
 - **Node.js:** `>=24.9.0`
 - **Package manager:** pnpm
 - **Interface:** DSH Web, using the chosen `web` profile in the commands below
@@ -20,7 +20,7 @@ node --version
 Get-Command dsh | Select-Object Source
 ```
 
-Historical logs used DSH 0.2.1-rc.2, which does **not** satisfy the plugin's engine requirement. Upgrade the active DSH runtime and compatible Better Sidebar installation before enabling the plugin. Do **not** use version-bypass flags as a substitute for compatibility.
+Historical logs used DSH 0.2.1-rc.2, which does **not** satisfy the plugin's engine requirement. Upgrade the active DSH runtime and, if installed, the compatible Better Sidebar installation before enabling the plugin. Do **not** use version-bypass flags as a substitute for compatibility.
 
 ## 2. Download and build
 
@@ -42,7 +42,7 @@ dsh plugin --profile web add .
 dsh plugin --profile web install
 ```
 
-Then fully stop and restart DSH Web and hard-refresh the browser (`Ctrl+Shift+R` on Windows). Confirm that the DSH plugin manager shows **dsh-mindmap v0.1.5**, with no client-module error.
+Then fully stop and restart DSH Web and hard-refresh the browser (`Ctrl+Shift+R` on Windows). Confirm that the DSH plugin manager shows **dsh-mindmap v0.2.0**, with no client-module error.
 
 > These commands are profile-specific. If your DSH setup uses a profile other than `web`, adapt the profile flag consistently.
 
@@ -64,7 +64,7 @@ markmap: true
 - Tests
 ```
 
-Open the file via Better Sidebar and confirm the following manually:
+First test without Better Sidebar: open Mindmap Studio from the native right sidebar, create/import a Markdown file, edit, export MD/SVG/PNG, and check mobile. Export downloads a copy; it does not write the workspace. Then install Better Sidebar if desired and confirm the following manually:
 
 1. A marked `.md` file displays the mind-map view; a file without that marker still uses the normal Markdown viewer.
 2. **View as Mindmap** works from a file action; the Mindmap tab/editor action is available where the host UI exposes it.

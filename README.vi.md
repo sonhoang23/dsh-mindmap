@@ -2,7 +2,7 @@
   <img src="./src/assets/icon.svg" width="76" alt="Biểu tượng DSH Mindmap" />
   <h1>DSH Mindmap</h1>
   <p><strong>Biến Markdown thành sơ đồ tư duy tương tác ngay trong DeepSeek Harness.</strong></p>
-  <p>Plugin mã nguồn mở theo hướng Markdown-first dành cho DSH Web và Better Sidebar.<br />File <code>.md</code> gốc vẫn là nguồn dữ liệu chính.</p>
+  <p>Plugin mã nguồn mở theo hướng Markdown-first dành cho DSH Web, tích hợp Better Sidebar tùy chọn.<br />File <code>.md</code> gốc vẫn là nguồn dữ liệu chính.</p>
   <p>
     <a href="#bắt-đầu-nhanh">Cài đặt</a> ·
     <a href="#cách-hoạt-động">Cách hoạt động</a> ·
@@ -11,7 +11,7 @@
   </p>
   <p>
     <img src="https://img.shields.io/badge/status-experimental-444444" alt="Trạng thái: thử nghiệm" />
-    <img src="https://img.shields.io/badge/version-0.1.5-777777" alt="Phiên bản: 0.1.5" />
+    <img src="https://img.shields.io/badge/version-0.2.0-777777" alt="Phiên bản: 0.2.0" />
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="Giấy phép: MIT" /></a>
   </p>
 </div>
@@ -36,7 +36,11 @@
 - **Lưu an toàn hơn** — sử dụng route đã xác thực của Better Sidebar, gắn với phiên làm việc và kiểm tra xung đột thời gian chỉnh sửa.
 
 > [!IMPORTANT]
-> **Bản thử nghiệm (v0.1.5).** Chưa có xác nhận hoàn tất kiểm thử toàn trình trên một DSH Web profile thực tế. Đưa source code lên GitHub **không có nghĩa** plugin đã được cài vào DSH trên máy bạn.
+> **Bản thử nghiệm (v0.2.0).** Chưa có xác nhận hoàn tất kiểm thử toàn trình trên một DSH Web profile thực tế. Đưa source code lên GitHub **không có nghĩa** plugin đã được cài vào DSH trên máy bạn.
+
+## Mindmap Studio độc lập
+
+Mở **Mindmap Studio** trong danh sách tab sidebar phải của DSH. Tạo sơ đồ hoặc chọn file Markdown trên thiết bị (tối đa 2 MB), chỉnh sửa và xuất MD, SVG, PNG. Xuất MD tải bản sao, không ghi đè file gốc. Duyệt, lưu trực tiếp và mở liên kết file workspace vẫn cần Better Sidebar. Hai chế độ dùng chung trình hiển thị.
 
 ## Cách hoạt động
 
@@ -125,7 +129,7 @@ Chỉnh sửa Markdown **không tự động lưu**. Nút xuất Markdown sẽ t
 | Thành phần | Yêu cầu |
 | --- | --- |
 | DSH | `>=0.2.2-0 <0.3.0` |
-| Better Sidebar | Peer dependency `^0.32.1` |
+| Better Sidebar | Tùy chọn, `^0.32.1` cho chế độ tích hợp |
 | Node.js | `>=24.9.0` |
 | Giao diện | DSH Web |
 | Giấy phép | [MIT](./LICENSE) |

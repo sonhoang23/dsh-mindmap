@@ -3,6 +3,7 @@
  * Mindmap" choices without replacing Better Sidebar's regular .md editor.
  */
 import { createElement as h } from 'react'
+import type { ReactNode } from 'react'
 import type { Context as CordisContext } from '@deepseek-ai/cordis'
 import type {
   BetterSidebarService,
@@ -10,9 +11,10 @@ import type {
   TabComponentProps,
 } from 'dsh-better-sidebar'
 import { isMarkdownPath, shouldAutoOpenMindmap } from './detect.ts'
+import { StandaloneStudio } from './standalone.tsx'
 import { ManualMindmap, MindmapPanel } from './preview.tsx'
 
-export const inject = ['betterSidebar']
+export const inject: string[] = []
 const TAB = 'dsh-mindmap:file'
 
 function fileName(path: string): string {
@@ -23,11 +25,61 @@ function markmapIcon() {
   return h('span', { role: 'img', 'aria-label': 'Mindmap' }, '🧠')
 }
 
-export function apply(ctx: CordisContext): void {
-  const service = (ctx as CordisContext & { betterSidebar: BetterSidebarService }).betterSidebar
-  if (!service) throw new Error('[dsh-mindmap] Better Sidebar service is required')
+const NATIVE_TAB = 'dsh-mindmap'
+const NATIVE_KEY = 'dsh-mindmap:native'
 
-  ctx.effect(() => {
+interface NativeTabInfo { tab: { id: string; visible: boolean } }
+interface NativeProps { useTabInfo: () => NativeTabInfo }
+interface TabRegistry {
+  register(descriptor: {
+    id: string; kind: string; keepMounted?: boolean; priority: 'extension'
+    title: (address: string) => string
+    guide?: { id: string; title: () => string; description: () => string; order: number }[]
+  }): () => void
+}
+interface SlotRegistry {
+  inject(name: string, callback: () => () => void): () => void
+  register(
+    descriptor: { name: string; key: string; inject: (sessionId: string) => object },
+    component: (props: NativeProps) => ReactNode,
+  ): () => void
+}
+
+function NativeStudio(props: NativeProps): ReactNode {
+  const { tab } = props.useTabInfo()
+  return h('div', { style: { height: '100%', minHeight: 0 }, 'data-dsh-mindmap-native': '' },
+    h(StandaloneStudio, { key: tab.id }))
+}
+
+function registerNative(ctx: CordisContext): () => void {
+  const seat = ctx.inject(['sidebarRightTabs'], injected => {
+    const tabs = (injected as unknown as { get: (name: string) => unknown }).get('sidebarRightTabs') as TabRegistry | undefined
+    if (!tabs) return
+    const slots = (ctx as unknown as { slots: SlotRegistry }).slots
+    const disposeType = tabs.register({
+      id: NATIVE_KEY, kind: NATIVE_TAB, keepMounted: true, priority: 'extension',
+      title: () => 'Mindmap Studio',
+      guide: [{
+        id: NATIVE_KEY, title: () => 'Mindmap Studio',
+        description: () => 'Xem và chỉnh sửa Markdown Mindmap', order: 70,
+      }],
+    })
+    let disposeSlot: (() => void) | undefined
+    try {
+      disposeSlot = slots.inject('sidebar.right.pane.tab', () => slots.register({
+        name: 'sidebar.right.pane.tab', key: NATIVE_KEY, inject: () => ({}),
+      }, NativeStudio))
+    } catch (error) {
+      disposeType()
+      throw error
+    }
+    return () => { disposeSlot?.(); disposeType() }
+  })
+  return () => { void seat.dispose() }
+}
+
+
+function registerSidebar(service: BetterSidebarService): () => void {
     const disposers: Array<() => void> = []
     const viewer = (props: FileViewerProps) => {
       if (props.largeFile || props.content === undefined) {
@@ -146,5 +198,15 @@ export function apply(ctx: CordisContext): void {
     }
 
     return () => { disposers.reverse().forEach(dispose => dispose()) }
-  }, 'dsh-mindmap: Better Sidebar contributions')
+}
+
+export function apply(ctx: CordisContext): void {
+  ctx.effect(() => registerNative(ctx), 'dsh-mindmap: native studio')
+  ctx.effect(() => {
+    const seat = ctx.inject(['betterSidebar'], injected => {
+      const service = (injected as unknown as { get: (name: string) => unknown }).get('betterSidebar') as BetterSidebarService | undefined
+      return service ? registerSidebar(service) : undefined
+    })
+    return () => { void seat.dispose() }
+  }, 'dsh-mindmap: optional Better Sidebar integration')
 }

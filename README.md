@@ -2,7 +2,7 @@
   <img src="./src/assets/icon.svg" width="76" alt="DSH Mindmap icon" />
   <h1>DSH Mindmap</h1>
   <p><strong>Turn Markdown into interactive mind maps — inside DeepSeek Harness.</strong></p>
-  <p>A Markdown-first, open-source plugin for DSH Web and Better Sidebar.<br />Your <code>.md</code> file stays the source of truth.</p>
+  <p>A Markdown-first, open-source plugin for DSH Web with optional Better Sidebar integration.<br />Your <code>.md</code> file stays the source of truth.</p>
   <p>
     <a href="#quick-start">Get started</a> ·
     <a href="#how-it-works">See how it works</a> ·
@@ -11,7 +11,7 @@
   </p>
   <p>
     <img src="https://img.shields.io/badge/status-experimental-444444" alt="Status: experimental" />
-    <img src="https://img.shields.io/badge/version-0.1.5-777777" alt="Version: 0.1.5" />
+    <img src="https://img.shields.io/badge/version-0.2.0-777777" alt="Version: 0.2.0" />
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="License: MIT" /></a>
   </p>
 </div>
@@ -36,7 +36,11 @@
 - **Guarded saves** — writes go through Better Sidebar's authenticated, session-scoped routes with modification-time conflict checks.
 
 > [!IMPORTANT]
-> **Experimental (v0.1.5).** Live end-to-end verification in a DSH Web profile is not yet recorded as complete. This repository contains source code; cloning it does **not** automatically install the plugin.
+> **Experimental (v0.2.0).** Live end-to-end verification in a DSH Web profile is not yet recorded as complete. This repository contains source code; cloning it does **not** automatically install the plugin.
+
+## Standalone Mindmap Studio
+
+Open **Mindmap Studio** from the native DSH right-sidebar tab guide. Create a map or import a local `.md` / `.markdown` file (up to 2 MB), edit the draft, and export MD, SVG or PNG. Markdown export downloads a copy; it does not overwrite the original. Workspace browsing, direct workspace saves and relative workspace links still require Better Sidebar. Both modes share the same renderer and controls.
 
 ## How it works
 
@@ -86,7 +90,7 @@ Unmarked Markdown files continue to use Better Sidebar's regular viewer by defau
 
 ## Quick start
 
-**Requirements:** Node.js **24.9+**, pnpm, DSH Web **>=0.2.2-0 <0.3.0**, and a compatible **dsh-better-sidebar 0.32.x** installation (peer dependency: `^0.32.1`).
+**Requirements:** Node.js **24.9+**, pnpm, DSH Web **>=0.2.2-0 <0.3.0**, ; Better Sidebar 0.32.x (`^0.32.1`) is optional.
 
 ```bash
 git clone https://github.com/sonhoang23/dsh-mindmap.git
@@ -102,7 +106,7 @@ dsh plugin --profile web add .
 dsh plugin --profile web install
 ```
 
-Fully restart DSH Web and hard-refresh the browser. Then open a Markdown file containing `markmap: true`.
+Fully restart DSH Web and hard-refresh the browser. Then open **Mindmap Studio** in the DSH native right sidebar, or open a marked Markdown file in Better Sidebar if installed.
 
 > This package is currently marked `private: true`. These are **source-install instructions**, not an npm registry installation command. See the [complete installation guide](./docs/installation.md) for compatibility checks, updates and verification.
 
@@ -125,7 +129,7 @@ Changes in the Markdown editor are **not saved automatically**. Exporting Markdo
 | Component | Requirement |
 | --- | --- |
 | DSH | `>=0.2.2-0 <0.3.0` |
-| Better Sidebar | `^0.32.1` peer dependency |
+| Better Sidebar | Optional, `^0.32.1` for integrated mode |
 | Node.js | `>=24.9.0` |
 | UI | DSH Web |
 | License | [MIT](./LICENSE) |

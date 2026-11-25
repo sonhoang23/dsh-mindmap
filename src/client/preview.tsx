@@ -30,7 +30,10 @@ type ReadResult =
 export interface MindmapPanelProps {
   path: string
   scope: Scope
-  service: BetterSidebarService
+  service?: BetterSidebarService
+  onOpenLocal?: () => void
+  onNewLocal?: () => void
+  onDirtyChange?: (dirty: boolean) => void
   content: string
   mtimeMs?: number
   onReload?: () => void
@@ -168,6 +171,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null)
   const mapRef = useRef<MapElement | null>(null)
   const dirty = draft !== saved
+  useEffect(() => { props.onDirtyChange?.(dirty) }, [dirty, props.onDirtyChange])
 
   useEffect(() => {
     if (dirty) return // Do not silently discard unsaved edits during a host reload.
@@ -211,6 +215,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
       if (!target) return
       event.preventDefault()
       event.stopPropagation()
+      if (!service) { setFeedback('Mở file liên kết bằng nút Mở Markdown; chế độ độc lập không truy cập workspace.'); return }
       void readMarkdown(service, scope, target).then(() => {
         service.openFile(scope, target)
       }).catch(() => {
@@ -293,7 +298,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
   }, [mobileMenuOpen])
 
   const save = async () => {
-    if (!dirty || saving) return
+    if (!service || !dirty || saving) return
     if (baseline === undefined) {
       setFeedback('Không có phiên bản gốc an toàn để ghi. Hãy tải lại file.')
       return
@@ -395,8 +400,14 @@ export function MindmapPanel(props: MindmapPanelProps) {
     setDraft(saved)
     onReload?.()
   }
-  const exportMarkdown = () =>
+  const exportMarkdown = () => {
     download(new Blob([draft], { type: 'text/markdown;charset=utf-8' }), fileStem(path) + '.md')
+    if (!service) setFeedback('Đã yêu cầu tải bản Markdown; file gốc không bị ghi đè.')
+  }
+  const localAction = (action?: () => void) => {
+    if (dirty && !window.confirm('Bản nháp đã thay đổi. Tiếp tục và bỏ bản nháp?')) return
+    action?.()
+  }
   const mapAction = (action: 'fit' | 'zoomIn' | 'zoomOut' | 'expandAll') => {
     const mm = mapRef.current?.mm
     if (!mm) {
@@ -452,8 +463,10 @@ export function MindmapPanel(props: MindmapPanelProps) {
       layoutSelect(),
       nodeWidthSelect(),
       h('span', { className: 'dsh-mindmap-grow' }),
-      button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving),
-      button('Nạp lại', reload, undefined, !onReload),
+      service ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving) : null,
+      props.onOpenLocal ? button('Mở Markdown', () => localAction(props.onOpenLocal)) : null,
+      props.onNewLocal ? button('Tạo mới', () => localAction(props.onNewLocal)) : null,
+      service ? button('Nạp lại', reload, undefined, !onReload) : null,
       button('MD ↓', exportMarkdown),
       button('SVG ↓', () => { void exportImage('svg') }, undefined, view !== 'mindmap' || busyExport),
       button('PNG ↓', () => { void exportImage('png') }, undefined, view !== 'mindmap' || busyExport),
@@ -463,9 +476,9 @@ export function MindmapPanel(props: MindmapPanelProps) {
         button('Mindmap', () => switchView('mindmap'), view === 'mindmap'),
         button('Markdown', () => switchView('markdown'), view === 'markdown'),
       ),
-      button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving, {
+      service ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving, {
         'aria-label': dirty ? 'Lưu thay đổi Markdown' : 'Không có thay đổi để lưu',
-      }),
+      }) : button('MD ↓', exportMarkdown),
       h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
         h('button', {
           type: 'button',
@@ -479,7 +492,9 @@ export function MindmapPanel(props: MindmapPanelProps) {
           ? h('div', { className: 'dsh-mindmap-mobile-popover', role: 'group', 'aria-label': 'Tùy chọn và xuất file' },
               h('label', null, 'Bố cục', layoutSelect()),
               h('label', null, 'Chiều rộng node', nodeWidthSelect()),
-              button('Nạp lại', reload, undefined, !onReload),
+              service ? button('Nạp lại', reload, undefined, !onReload) : null,
+              props.onOpenLocal ? button('Mở Markdown', () => localAction(props.onOpenLocal)) : null,
+              props.onNewLocal ? button('Tạo mới', () => localAction(props.onNewLocal)) : null,
               button('Xuất Markdown', () => { exportMarkdown(); setMobileMenuOpen(false) }),
               button('Xuất SVG', () => { void exportImage('svg'); setMobileMenuOpen(false) }, undefined, view !== 'mindmap' || busyExport),
               button('Xuất PNG', () => { void exportImage('png'); setMobileMenuOpen(false) }, undefined, view !== 'mindmap' || busyExport),

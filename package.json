@@ -1,9 +1,9 @@
 {
   "name": "dsh-mindmap",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Markdown-first interactive mindmap viewer for DSH Better Sidebar",
+  "description": "Standalone Markdown-first Mindmap Studio for DSH with optional Better Sidebar integration",
   "license": "MIT",
   "engines": {
     "node": ">=24.9.0",
@@ -36,10 +36,7 @@
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "platform": "web",
-      "inject": [
-        "dsh-better-sidebar"
-      ]
+      "platform": "web"
     }
   },
   "scripts": {
@@ -71,5 +68,10 @@
     "vitest": "^4.1.11",
     "@deepseek-ai/schemastery": "3.19.0"
   },
-  "icon": "./src/assets/icon.svg"
+  "icon": "./src/assets/icon.svg",
+  "peerDependenciesMeta": {
+    "dsh-better-sidebar": {
+      "optional": true
+    }
+  }
 }

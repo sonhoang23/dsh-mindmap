@@ -28,18 +28,20 @@ The `build` command runs `tsdown` followed by `node scripts/check-client-bundle.
 | File | Responsibility |
 | --- | --- |
 | `src/index.ts` | Host entry: schema/registration; intentionally does not perform workspace file I/O |
-| `src/client/index.tsx` | Registers Better Sidebar auto/manual viewers, a dedicated tab, a file action and an editor action; cleans up registrations |
+| `src/client/index.tsx` | Registers native Mindmap Studio and optional Better Sidebar auto/manual viewers, a dedicated tab, a file action and an editor action; cleans up registrations |
 | `src/client/detect.ts` | Conservative Markdown path/frontmatter detection; regular Markdown falls back to the original viewer |
 | `src/client/preview.tsx` | Markmap UI, Markdown editing, layout selection, exports, guarded saves, resize/refit behavior |
 | `tsdown.config.ts` | Host ESM and browser CJS builds; browser import boundary and post-minify loader wrapper |
 | `scripts/check-client-bundle.mjs` | Browser bundle integrity checks |
 | `tests/detect.test.ts` | Detection regression tests |
 
+Native Studio uses user-selected browser files (2 MB maximum), shares MindmapPanel, and exports downloads without host I/O. Relative workspace links require the Better Sidebar adapter.
+
 ## Key implementation rules
 
 - **Respect ordinary Markdown.** Automatic map mode requires a `.md` / `.markdown` file with explicit `markmap: true` frontmatter. Do not claim arbitrary files solely because of their extension. Structured `markmap:` options alone are not currently recognized by auto-detection.
 - **Keep source as truth.** The map visualizes the editable Markdown draft. Switching views does not automatically persist edits.
-- **Use Better Sidebar routes for I/O.** Reads use `sidebar/api/fs.read` and writes use `sidebar/write`, authenticated and scoped to the active session. Do not introduce arbitrary filesystem URLs.
+- **Use Better Sidebar routes for workspace I/O.** Reads use `sidebar/api/fs.read` and writes use `sidebar/write`, authenticated and scoped to the active session. Do not introduce arbitrary filesystem URLs.
 - **Reject stale writes.** Saves send the original `expectedMtimeMs` and surface conflicts rather than silently overwriting external edits.
 - **Keep a browser-safe bundle.** Built-in Node imports are not client externals; browser-specific resolutions and polyfills belong at the bundle boundary.
 - **Dispose contributions.** The plugin registers five Better Sidebar contributions and releases them on cleanup.
@@ -49,6 +51,8 @@ The `build` command runs `tsdown` followed by `node scripts/check-client-bundle.
 
 The code-level gate cannot prove host compatibility. After `pnpm run check`, verify against a compatible DSH Web profile:
 
+- [ ] Native Mindmap Studio opens with Better Sidebar absent; create/import/export and mobile controls work.
+- [ ] Both native and integrated tabs work when Better Sidebar is installed.
 - [ ] Unmarked Markdown still uses the original viewer.
 - [ ] Marked Markdown auto-opens as a map; pan, zoom and folding work.
 - [ ] File action and editor/tab action open mind-map mode manually.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- Native Mindmap Studio with optional Better Sidebar integration.
+- Create/import local Markdown and export MD/SVG/PNG using the existing viewer.
+- Direct workspace saves and relative file navigation remain available through Better Sidebar only.
+- Live DSH verification pending.
+
+
 ## Unreleased — Restore mobile Level picker
 
 - Reintroduce a compact-screen **Level** selector alongside zoom and Fit controls; select a depth to fold deeper branches, or **All** to expand everything.
