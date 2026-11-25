@@ -31,6 +31,7 @@ export interface MindmapPanelProps {
   path: string
   scope: Scope
   service?: BetterSidebarService
+  onOpenLink?: (target: string) => void
   onOpenLocal?: () => void
   onNewLocal?: () => void
   onDirtyChange?: (dirty: boolean) => void
@@ -215,6 +216,10 @@ export function MindmapPanel(props: MindmapPanelProps) {
       if (!target) return
       event.preventDefault()
       event.stopPropagation()
+      if (props.onOpenLink) {
+        try { props.onOpenLink(target) } catch { setFeedback('Không thể mở file: ' + target) }
+        return
+      }
       if (!service) { setFeedback('Mở file liên kết bằng nút Mở Markdown; chế độ độc lập không truy cập workspace.'); return }
       void readMarkdown(service, scope, target).then(() => {
         service.openFile(scope, target)
@@ -224,7 +229,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
     }
     element.addEventListener('click', onLink, true)
     return () => element.removeEventListener('click', onLink, true)
-  }, [view, path, scope.sessionId, scope.cwd, service])
+  }, [view, path, scope.sessionId, scope.cwd, service, props.onOpenLink])
 
   // Markmap renders asynchronously. Read available fold levels from the actual
   // rendered tree, just like its native toolbar, rather than guessing from MD.

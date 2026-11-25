@@ -11,6 +11,7 @@ import type {
   TabComponentProps,
 } from 'dsh-better-sidebar'
 import { isMarkdownPath, shouldAutoOpenMindmap } from './detect.ts'
+import { registerNativeDocument } from './native-document.tsx'
 import { StandaloneStudio } from './standalone.tsx'
 import { ManualMindmap, MindmapPanel } from './preview.tsx'
 
@@ -52,10 +53,10 @@ function NativeStudio(props: NativeProps): ReactNode {
 }
 
 function registerNative(ctx: CordisContext): () => void {
-  const seat = ctx.inject(['sidebarRightTabs'], injected => {
+  const seat = ctx.inject(['slots', 'sidebarRightTabs'], injected => {
     const tabs = (injected as unknown as { get: (name: string) => unknown }).get('sidebarRightTabs') as TabRegistry | undefined
     if (!tabs) return
-    const slots = (ctx as unknown as { slots: SlotRegistry }).slots
+    const slots = (injected as unknown as { slots: SlotRegistry }).slots
     const disposeType = tabs.register({
       id: NATIVE_KEY, kind: NATIVE_TAB, keepMounted: true, priority: 'extension',
       title: () => 'Mindmap Studio',
@@ -201,6 +202,7 @@ function registerSidebar(service: BetterSidebarService): () => void {
 }
 
 export function apply(ctx: CordisContext): void {
+  registerNativeDocument(ctx)
   ctx.effect(() => registerNative(ctx), 'dsh-mindmap: native studio')
   ctx.effect(() => {
     const seat = ctx.inject(['betterSidebar'], injected => {

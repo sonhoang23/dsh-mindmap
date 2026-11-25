@@ -11,7 +11,7 @@
   </p>
   <p>
     <img src="https://img.shields.io/badge/status-experimental-444444" alt="Trạng thái: thử nghiệm" />
-    <img src="https://img.shields.io/badge/version-0.2.0-777777" alt="Phiên bản: 0.2.0" />
+    <img src="https://img.shields.io/badge/version-0.2.1-777777" alt="Phiên bản: 0.2.1" />
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="Giấy phép: MIT" /></a>
   </p>
 </div>
@@ -36,7 +36,11 @@
 - **Lưu an toàn hơn** — sử dụng route đã xác thực của Better Sidebar, gắn với phiên làm việc và kiểm tra xung đột thời gian chỉnh sửa.
 
 > [!IMPORTANT]
-> **Bản thử nghiệm (v0.2.0).** Chưa có xác nhận hoàn tất kiểm thử toàn trình trên một DSH Web profile thực tế. Đưa source code lên GitHub **không có nghĩa** plugin đã được cài vào DSH trên máy bạn.
+> **Bản thử nghiệm (v0.2.1).** Chưa có xác nhận hoàn tất kiểm thử toàn trình trên một DSH Web profile thực tế. Đưa source code lên GitHub **không có nghĩa** plugin đã được cài vào DSH trên máy bạn.
+
+## Mở trực tiếp từ Files mặc định
+
+Với DSH có `documentPreviews`, click file `*.mindmap.md` hoặc `*.mindmap.markdown` để mở Mindmap ngay cả khi tắt Better Sidebar. Markdown thường không bị thay đổi; tự nhận diện frontmatter trên file `.md` thường vẫn cần Better Sidebar. Chế độ native xuất bản nháp, chưa ghi trực tiếp file workspace. Liên kết Markdown tương đối mở qua điều hướng native.
 
 ## Mindmap Studio độc lập
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Native DSH document preview for compound Mindmap Markdown suffixes, without Better Sidebar.
+- Preserve ordinary Markdown and use native resource navigation for relative links.
+- Native workspace write-back and frontmatter-only auto-detection remain unsupported.
+- Live DSH acceptance pending.
+
+
 ## 0.2.0
 
 - Native Mindmap Studio with optional Better Sidebar integration.

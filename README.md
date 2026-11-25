@@ -11,7 +11,7 @@
   </p>
   <p>
     <img src="https://img.shields.io/badge/status-experimental-444444" alt="Status: experimental" />
-    <img src="https://img.shields.io/badge/version-0.2.0-777777" alt="Version: 0.2.0" />
+    <img src="https://img.shields.io/badge/version-0.2.1-777777" alt="Version: 0.2.1" />
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="License: MIT" /></a>
   </p>
 </div>
@@ -36,7 +36,11 @@
 - **Guarded saves** — writes go through Better Sidebar's authenticated, session-scoped routes with modification-time conflict checks.
 
 > [!IMPORTANT]
-> **Experimental (v0.2.0).** Live end-to-end verification in a DSH Web profile is not yet recorded as complete. This repository contains source code; cloning it does **not** automatically install the plugin.
+> **Experimental (v0.2.1).** Live end-to-end verification in a DSH Web profile is not yet recorded as complete. This repository contains source code; cloning it does **not** automatically install the plugin.
+
+## Native Files viewer (no Better Sidebar required)
+
+On DSH versions exposing `documentPreviews`, open a `*.mindmap.md` or `*.mindmap.markdown` file directly from native Files. The Mindmap viewer is selected automatically, and the native viewer menu retains Markdown. Ordinary `.md` files are not claimed; frontmatter-only auto-detection remains available in Better Sidebar. Native edits can be exported as a copy, not saved back to the workspace. Relative Markdown links use the current tab's native resource navigation.
 
 ## Standalone Mindmap Studio
 
