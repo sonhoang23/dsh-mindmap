@@ -87,3 +87,7 @@ DSH `>=0.2.2-0 <0.3.0` có document registry; Node.js `>=24.9.0`; Better Sidebar
 [Cài đặt](./docs/installation.md) · [Phát triển](./docs/development.md) · [Mobile](./docs/mobile-testing.md) · [Xử lý lỗi](./docs/troubleshooting.md) · [Changelog](./CHANGELOG.md)
 
 Hoan nghênh issue và pull request. Sử dụng [Markmap](https://markmap.js.org/) · giấy phép [MIT](./LICENSE).
+
+## Bản đóng gói trên GitHub Releases
+
+File `.tgz` thử nghiệm theo phiên bản được tạo tại [GitHub Releases](https://github.com/sonhoang23/dsh-mindmap/releases) sau khi các bước kiểm tra thành công. Có thể cài file đã phát hành bằng `dsh plugin --profile web add <tarball-url>` rồi chạy `dsh plugin --profile web install`. Vẫn có thể cài từ source như hướng dẫn trên. Cần kiểm thử cài đặt tarball trên profile sạch riêng.

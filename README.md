@@ -91,3 +91,7 @@ Native-first means core features must not require third-party plugins. See [AGEN
 [Installation](./docs/installation.md) · [Development](./docs/development.md) · [Mobile testing](./docs/mobile-testing.md) · [Troubleshooting](./docs/troubleshooting.md) · [Changelog](./CHANGELOG.md)
 
 Issues and pull requests welcome. Include host version, optional integration status and reproducible steps. Built with [Markmap](https://markmap.js.org/), licensed under [MIT](./LICENSE).
+
+## Prebuilt GitHub releases
+
+Versioned experimental tarballs are published on [GitHub Releases](https://github.com/sonhoang23/dsh-mindmap/releases) by the release workflow after the repository checks pass. Install a published `.tgz` using `dsh plugin --profile web add <tarball-url>` followed by `dsh plugin --profile web install`. The source-install instructions remain available above. Clean-profile installation of the release asset must be verified separately.
