@@ -1,9 +1,9 @@
 {
   "name": "dsh-mindmap",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "type": "module",
-  "description": "Standalone Markdown-first Mindmap Studio for DSH with optional Better Sidebar integration",
+  "description": "Native-first Markdown mindmap viewer for DeepSeek Harness, with optional Better Sidebar integration",
   "license": "MIT",
   "engines": {
     "node": ">=24.9.0",

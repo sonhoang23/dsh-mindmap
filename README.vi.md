@@ -1,155 +1,89 @@
 <div align="center">
-  <img src="./src/assets/icon.svg" width="76" alt="Biểu tượng DSH Mindmap" />
+  <img src="./src/assets/icon.svg" width="76" alt="DSH Mindmap" />
   <h1>DSH Mindmap</h1>
   <p><strong>Biến Markdown thành sơ đồ tư duy tương tác ngay trong DeepSeek Harness.</strong></p>
-  <p>Plugin mã nguồn mở theo hướng Markdown-first dành cho DSH Web, tích hợp Better Sidebar tùy chọn.<br />File <code>.md</code> gốc vẫn là nguồn dữ liệu chính.</p>
-  <p>
-    <a href="#bắt-đầu-nhanh">Cài đặt</a> ·
-    <a href="#cách-hoạt-động">Cách hoạt động</a> ·
-    <a href="#tài-liệu">Tài liệu</a> ·
-    <a href="./README.md">English</a>
-  </p>
-  <p>
-    <img src="https://img.shields.io/badge/status-experimental-444444" alt="Trạng thái: thử nghiệm" />
-    <img src="https://img.shields.io/badge/version-0.2.1-777777" alt="Phiên bản: 0.2.1" />
-    <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="Giấy phép: MIT" /></a>
-  </p>
+  <p>Ưu tiên DSH thuần · Markdown là nguồn chính · Better Sidebar tùy chọn</p>
+  <p><a href="#cài-đặt">Cài đặt</a> · <a href="#tính-năng">Tính năng</a> · <a href="#tích-hợp-better-sidebar">Better Sidebar</a> · <a href="./README.md">English</a></p>
+  <p><img src="https://img.shields.io/badge/version-0.2.2-777777" alt="Phiên bản 0.2.2" /> <img src="https://img.shields.io/badge/status-experimental-444444" alt="Thử nghiệm" /> <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="MIT" /></a></p>
 </div>
 
----
+![Mindmap Topic Taxonomy thực tế](./assets/topic-taxonomy-mindmap.webp)
 
-## DSH Mindmap trong thực tế
+*Ảnh kết quả sơ đồ thực tế từ Markdown, không phải ảnh toàn bộ giao diện DSH.*
 
-![Sơ đồ tư duy Topic Taxonomy thực tế được hiển thị bằng DSH Mindmap](./assets/topic-taxonomy-mindmap.webp)
+## Cài đặt
 
-*Topic Taxonomy — sơ đồ tư duy thực tế được kết xuất từ Markdown. Ảnh thể hiện kết quả mindmap, không phải toàn bộ giao diện DSH Web.*
-
-## Vì sao nên dùng DSH Mindmap?
-
-**Tư duy bằng hình ảnh, lưu trữ bằng Markdown.** DSH Mindmap giúp bạn khám phá cấu trúc ghi chú, ý tưởng hay dự án mà không phải chuyển dữ liệu sang định dạng riêng.
-
-- **Markdown là trung tâm** — làm việc với file `.md` / `.markdown` thông thường.
-- **Tích hợp Better Sidebar** — tự mở thành sơ đồ khi file có đánh dấu, hoặc mở thủ công bất kỳ file Markdown nào.
-- **Hai chế độ, một bản nháp** — chuyển qua lại giữa sơ đồ tương tác và trình chỉnh sửa Markdown.
-- **Điều hướng và bố cục** — phóng to, thu nhỏ, kéo sơ đồ, đóng/mở nhánh; chọn Document, Tree, Two-sided hoặc Org chart.
-- **Xuất dữ liệu** — tải Markdown, SVG hoặc PNG.
-- **Lưu an toàn hơn** — sử dụng route đã xác thực của Better Sidebar, gắn với phiên làm việc và kiểm tra xung đột thời gian chỉnh sửa.
-
-> [!IMPORTANT]
-> **Bản thử nghiệm (v0.2.1).** Chưa có xác nhận hoàn tất kiểm thử toàn trình trên một DSH Web profile thực tế. Đưa source code lên GitHub **không có nghĩa** plugin đã được cài vào DSH trên máy bạn.
-
-## Mở trực tiếp từ Files mặc định
-
-Với DSH có `documentPreviews`, click file `*.mindmap.md` hoặc `*.mindmap.markdown` để mở Mindmap ngay cả khi tắt Better Sidebar. Markdown thường không bị thay đổi; tự nhận diện frontmatter trên file `.md` thường vẫn cần Better Sidebar. Chế độ native xuất bản nháp, chưa ghi trực tiếp file workspace. Liên kết Markdown tương đối mở qua điều hướng native.
-
-## Mindmap Studio độc lập
-
-Mở **Mindmap Studio** trong danh sách tab sidebar phải của DSH. Tạo sơ đồ hoặc chọn file Markdown trên thiết bị (tối đa 2 MB), chỉnh sửa và xuất MD, SVG, PNG. Xuất MD tải bản sao, không ghi đè file gốc. Duyệt, lưu trực tiếp và mở liên kết file workspace vẫn cần Better Sidebar. Hai chế độ dùng chung trình hiển thị.
-
-## Cách hoạt động
-
-Thêm `markmap: true` vào YAML frontmatter của file Markdown:
-
-```markdown
----
-markmap: true
----
-
-# DeepSeek Harness
-
-## Models
-- DeepSeek
-- Kimi
-
-## Tools
-- Files
-- Search
-
-## Plugins
-- Better Sidebar
-- DSH Mindmap
-```
-
-Better Sidebar sẽ hiển thị file đó thành sơ đồ tư duy. Sơ đồ sau **minh họa cấu trúc nội dung**, không phải ảnh chụp giao diện plugin:
-
-```mermaid
-mindmap
-  root((DeepSeek Harness))
-    Models
-      DeepSeek
-      Kimi
-    Tools
-      Files
-      Search
-    Plugins
-      Better Sidebar
-      DSH Mindmap
-```
-
-**Với file Markdown có sẵn:** nhấp chuột phải trong Better Sidebar rồi chọn **View as Mindmap**, hoặc chọn hành động **Mindmap** trong editor. Một số giao diện Better Sidebar còn hiển thị **Open With → Mindmap**.
-
-File Markdown không đánh dấu vẫn dùng trình xem mặc định. Hiện chế độ tự nhận diện yêu cầu `markmap: true`; riêng cấu hình dạng object `markmap:` **chưa đủ để tự kích hoạt**. Bạn vẫn có thể mở thủ công.
-
-**GIF hướng dẫn thao tác:** hiện chưa có. Xem [hướng dẫn chuẩn bị asset](./assets/README.md) để quay GIF thực tế từ DSH Web.
-
-## Bắt đầu nhanh
-
-**Yêu cầu:** Node.js **24.9+**, pnpm, DSH Web **>=0.2.2-0 <0.3.0** và **dsh-better-sidebar 0.32.x** tương thích (peer dependency: `^0.32.1`).
+**Không cần Better Sidebar.** Yêu cầu DSH Web có `documentPreviews`, Node.js 24.9+ và pnpm. Người dùng đã xác nhận mở Mindmap trên DSH 0.2.2-rc.5 với plugin v0.2.1.
 
 ```bash
 git clone https://github.com/sonhoang23/dsh-mindmap.git
 cd dsh-mindmap
 pnpm install
 pnpm run check
-```
-
-**Chỉ khi toàn bộ kiểm tra thành công**, đăng ký plugin từ thư mục local vào profile DSH Web:
-
-```bash
 dsh plugin --profile web add .
 dsh plugin --profile web install
 ```
 
-Tắt và khởi động lại DSH Web hoàn toàn, sau đó hard-refresh trình duyệt. Mở file Markdown có `markmap: true` để kiểm tra.
+Chỉ cài khi check thành công. Khởi động lại DSH Web và hard refresh. Mở **Files** mặc định rồi chọn file `example.mindmap.md`:
 
-> Package hiện đặt `private: true`, vì thế đây là hướng dẫn **cài từ source**, không phải lệnh cài từ npm. Xem [hướng dẫn cài đặt đầy đủ](./docs/installation.md).
+```markdown
+---
+markmap: true
+---
 
-## Cách sử dụng
+# Kho kiến thức
+## AI Systems
+- Model
+- Harness
+## Learning
+- Ghi chú
+- Thực hành
+```
 
-| Thao tác | Cách làm |
-| --- | --- |
-| Tự mở thành mindmap | Thêm `markmap: true` vào YAML frontmatter rồi mở file |
-| Mở thủ công | Menu file trong Better Sidebar → **View as Mindmap** |
-| Chỉnh sửa | Chọn **Markdown** trên thanh công cụ |
-| Xem lại sơ đồ | Chọn **Mindmap** để dựng từ bản nháp hiện tại |
-| Đổi bố cục | Chọn **Document**, **Tree**, **Two-sided** hoặc **Org chart** |
-| Lưu file | Nhấn **Lưu**; plugin kiểm tra file có bị sửa từ nơi khác hay không |
-| Xuất file | Nhấn **MD ↓**, **SVG ↓** hoặc **PNG ↓** |
+Mindmap tự hiển thị. Có thể chuyển về Markdown bằng menu viewer của DSH. File .md thông thường vẫn giữ viewer mặc định. Native nhận diện qua đuôi file, không chỉ qua frontmatter.
 
-Chỉnh sửa Markdown **không tự động lưu**. Nút xuất Markdown sẽ tải bản nháp hiện tại; nhấn **Lưu** để ghi thay đổi vào file nguồn.
+## Tính năng
 
-## Tương thích
+| Tính năng | DSH thuần | Better Sidebar (tùy chọn) |
+| --- | --- | --- |
+| Mở file đuôi .mindmap.md | Có | Với frontmatter hoặc mở thủ công |
+| Zoom, Fit, Level, bố cục, xuống dòng | Có | Có |
+| Chỉnh sửa bản nháp và xuất MD/SVG/PNG | Có | Có |
+| Liên kết Markdown tương đối | Điều hướng native | Điều hướng Sidebar |
+| Tự nhận diện .md thường có markmap: true | Chưa | Có |
+| Lưu trực tiếp file gốc | Chưa | Có, kiểm tra xung đột |
 
-| Thành phần | Yêu cầu |
-| --- | --- |
-| DSH | `>=0.2.2-0 <0.3.0` |
-| Better Sidebar | Tùy chọn, `^0.32.1` cho chế độ tích hợp |
-| Node.js | `>=24.9.0` |
-| Giao diện | DSH Web |
-| Giấy phép | [MIT](./LICENSE) |
+Native đọc nội dung qua trình xem tài liệu đã xác thực của DSH, giới hạn 2 MB văn bản UTF-8. Chỉnh sửa là bản nháp; xuất Markdown tải bản sao, không ghi đè file. Không mở thêm API ghi filesystem. Giao diện mobile dùng chung bộ hiển thị.
 
-Đây là plugin cộng đồng, không phải bản phát hành chính thức của DeepSeek Harness.
+### Mindmap Studio
+
+Nếu danh sách tab native có Mindmap Studio, có thể tạo hoặc import Markdown cục bộ rồi xuất bản nháp. Với workspace, nên sử dụng Files mặc định.
+
+## Tích hợp Better Sidebar
+
+Better Sidebar 0.32.x (`^0.32.1`) là tích hợp tùy chọn: nhận diện frontmatter, menu View as Mindmap, thao tác editor và lưu file có kiểm tra thời gian chỉnh sửa. Adapter chỉ hoạt động khi dịch vụ này có mặt.
+
+## Kiến trúc Native First
+
+```mermaid
+flowchart TD
+  DSH[DSH thuần] --> Native[Native adapter]
+  DSH --> Studio[Local Studio]
+  Native --> Core[Mindmap Core]
+  Studio --> Core
+  Better[Better Sidebar tùy chọn] --> Adapter[Adapter bổ sung]
+  Adapter --> Core
+  Core --> Markmap[Markmap]
+```
+
+Tính năng cốt lõi không được phụ thuộc plugin bên thứ ba. Xem [AGENTS.md](./AGENTS.md) và [hướng dẫn phát triển](./docs/development.md).
+
+## Tương thích và trạng thái
+
+DSH `>=0.2.2-0 <0.3.0` có document registry; Node.js `>=24.9.0`; Better Sidebar `^0.32.1` nếu sử dụng. Plugin thử nghiệm, cài từ source (chưa phát hành npm). Mở file native đã được người dùng xác nhận trên v0.2.1; v0.2.2 cần nghiệm thu lại.
 
 ## Tài liệu
 
-- [Cài đặt, nâng cấp và kiểm tra](./docs/installation.md)
-- [Phát triển và kiến trúc](./docs/development.md)
-- [Xử lý lỗi thường gặp](./docs/troubleshooting.md)
-- [Lịch sử cập nhật](./CHANGELOG.md)
-- [README tiếng Anh](./README.md)
+[Cài đặt](./docs/installation.md) · [Phát triển](./docs/development.md) · [Mobile](./docs/mobile-testing.md) · [Xử lý lỗi](./docs/troubleshooting.md) · [Changelog](./CHANGELOG.md)
 
-## Đóng góp
-
-Bạn có thể tạo issue, gửi báo cáo lỗi có bước tái hiện hoặc mở pull request. Trước khi gửi thay đổi, hãy chạy `pnpm run check`; nếu sửa giao diện, cần kiểm tra thêm trong DSH Web tương thích. Khi báo lỗi, nên đính kèm phiên bản DSH/plugin và thông báo browser console.
-
-Phát triển dựa trên [Markmap](https://markmap.js.org/) và Better Sidebar. Phân phối theo [giấy phép MIT](./LICENSE).
+Hoan nghênh issue và pull request. Sử dụng [Markmap](https://markmap.js.org/) · giấy phép [MIT](./LICENSE).

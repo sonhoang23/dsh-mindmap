@@ -7,7 +7,7 @@ const MAX_BYTES = 2 * 1024 * 1024
 
 /** Native studio uses only user-selected browser files; no host filesystem access. */
 export function StandaloneStudio() {
-  const [doc, setDoc] = useState({ name: 'mindmap.md', content: EXAMPLE, revision: 0 })
+  const [doc, setDoc] = useState({ name: 'untitled.mindmap.md', content: EXAMPLE, revision: 0 })
   const [error, setError] = useState('')
   const [dirty, setDirty] = useState(false)
   const input = useRef<HTMLInputElement | null>(null)
@@ -44,10 +44,10 @@ export function StandaloneStudio() {
       } }),
     h('div', { style: { padding: '4px 9px', fontSize: 12, overflowWrap: 'anywhere' } }, doc.name + ' · Local file' + (dirty ? ' •' : '')),
     error ? h('p', { role: 'alert' }, error) : null,
-    h(MindmapPanel, { key: doc.revision, path: doc.name, scope: { sessionId: '' }, content: doc.content,
+    h(MindmapPanel, { key: doc.revision, path: doc.name, content: doc.content,
       onDirtyChange: setDirty,
       onOpenLocal: () => input.current?.click(),
-      onNewLocal: () => { generation.current++; replace('mindmap.md', EXAMPLE) },
+      onNewLocal: () => { generation.current++; replace('untitled.mindmap.md', EXAMPLE) },
     }),
   )
 }

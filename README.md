@@ -1,155 +1,93 @@
 <div align="center">
   <img src="./src/assets/icon.svg" width="76" alt="DSH Mindmap icon" />
   <h1>DSH Mindmap</h1>
-  <p><strong>Turn Markdown into interactive mind maps — inside DeepSeek Harness.</strong></p>
-  <p>A Markdown-first, open-source plugin for DSH Web with optional Better Sidebar integration.<br />Your <code>.md</code> file stays the source of truth.</p>
-  <p>
-    <a href="#quick-start">Get started</a> ·
-    <a href="#how-it-works">See how it works</a> ·
-    <a href="#documentation">Documentation</a> ·
-    <a href="./README.vi.md">Tiếng Việt</a>
-  </p>
-  <p>
-    <img src="https://img.shields.io/badge/status-experimental-444444" alt="Status: experimental" />
-    <img src="https://img.shields.io/badge/version-0.2.1-777777" alt="Version: 0.2.1" />
-    <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="License: MIT" /></a>
-  </p>
+  <p><strong>Turn Markdown into interactive mind maps — natively in DeepSeek Harness.</strong></p>
+  <p>Native-first · Markdown-first · Better Sidebar optional</p>
+  <p><a href="#quick-start">Quick start</a> · <a href="#features">Features</a> · <a href="#optional-better-sidebar">Better Sidebar</a> · <a href="./README.vi.md">Tiếng Việt</a></p>
+  <p><img src="https://img.shields.io/badge/version-0.2.2-777777" alt="Version 0.2.2" /> <img src="https://img.shields.io/badge/status-experimental-444444" alt="Experimental" /> <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555" alt="MIT" /></a></p>
 </div>
 
----
+![Real Topic Taxonomy mindmap](./assets/topic-taxonomy-mindmap.webp)
 
-## See DSH Mindmap in action
-
-![A real Topic Taxonomy mind map rendered with DSH Mindmap](./assets/topic-taxonomy-mindmap.webp)
-
-*Topic Taxonomy — a real-world mind map rendered from Markdown. This image shows the map output, not the full DSH Web interface.*
-
-## Why DSH Mindmap?
-
-**Think visually. Keep working in Markdown.** DSH Mindmap makes it easier to explore a hierarchy of notes, ideas, or project structure without converting your documents into a proprietary format.
-
-- **Markdown-first** — use ordinary `.md` / `.markdown` files; no separate map file to maintain.
-- **Integrated with Better Sidebar** — view a marked file automatically, or open any Markdown file as a mind map on demand.
-- **Two views, one draft** — switch between an interactive map and an editable Markdown panel.
-- **Navigation & layouts** — zoom, pan, expand/collapse branches, and choose Document, Tree, Two-sided or Org chart layout.
-- **Export** — download Markdown, SVG or PNG.
-- **Guarded saves** — writes go through Better Sidebar's authenticated, session-scoped routes with modification-time conflict checks.
-
-> [!IMPORTANT]
-> **Experimental (v0.2.1).** Live end-to-end verification in a DSH Web profile is not yet recorded as complete. This repository contains source code; cloning it does **not** automatically install the plugin.
-
-## Native Files viewer (no Better Sidebar required)
-
-On DSH versions exposing `documentPreviews`, open a `*.mindmap.md` or `*.mindmap.markdown` file directly from native Files. The Mindmap viewer is selected automatically, and the native viewer menu retains Markdown. Ordinary `.md` files are not claimed; frontmatter-only auto-detection remains available in Better Sidebar. Native edits can be exported as a copy, not saved back to the workspace. Relative Markdown links use the current tab's native resource navigation.
-
-## Standalone Mindmap Studio
-
-Open **Mindmap Studio** from the native DSH right-sidebar tab guide. Create a map or import a local `.md` / `.markdown` file (up to 2 MB), edit the draft, and export MD, SVG or PNG. Markdown export downloads a copy; it does not overwrite the original. Workspace browsing, direct workspace saves and relative workspace links still require Better Sidebar. Both modes share the same renderer and controls.
-
-## How it works
-
-Add the `markmap: true` frontmatter to a Markdown document:
-
-```markdown
----
-markmap: true
----
-
-# DeepSeek Harness
-
-## Models
-- DeepSeek
-- Kimi
-
-## Tools
-- Files
-- Search
-
-## Plugins
-- Better Sidebar
-- DSH Mindmap
-```
-
-Better Sidebar opens that file with the interactive mind-map viewer. The following diagram **illustrates the example structure**; it is not a screenshot of the plugin UI:
-
-```mermaid
-mindmap
-  root((DeepSeek Harness))
-    Models
-      DeepSeek
-      Kimi
-    Tools
-      Files
-      Search
-    Plugins
-      Better Sidebar
-      DSH Mindmap
-```
-
-**Want to map an existing Markdown file?** Right-click a `.md` / `.markdown` file in Better Sidebar and choose **View as Mindmap**, or use **Mindmap** from an editor action. An **Open With → Mindmap** choice may also appear, depending on the Better Sidebar UI.
-
-Unmarked Markdown files continue to use Better Sidebar's regular viewer by default. Automatic detection currently recognizes the explicit `markmap: true` marker; a structured `markmap:` options object alone does **not** opt a file into automatic opening. You can still open it manually.
-
-**Animated walkthrough:** not yet available. See [demo asset guidance](./assets/README.md) for how to capture a verified GIF from DSH Web.
+*Real map output rendered from Markdown; not a screenshot of the full DSH interface.*
 
 ## Quick start
 
-**Requirements:** Node.js **24.9+**, pnpm, DSH Web **>=0.2.2-0 <0.3.0**, ; Better Sidebar 0.32.x (`^0.32.1`) is optional.
+**No Better Sidebar required.** Install into DSH Web with Node.js 24.9+ and pnpm. DSH must expose the native `documentPreviews` registry (native viewing was reported working on 0.2.2-rc.5 with v0.2.1).
 
 ```bash
 git clone https://github.com/sonhoang23/dsh-mindmap.git
 cd dsh-mindmap
 pnpm install
 pnpm run check
-```
-
-**Only if all checks pass**, register the local source package in your DSH Web profile:
-
-```bash
 dsh plugin --profile web add .
 dsh plugin --profile web install
 ```
 
-Fully restart DSH Web and hard-refresh the browser. Then open **Mindmap Studio** in the DSH native right sidebar, or open a marked Markdown file in Better Sidebar if installed.
+Only install after checks pass. Restart DSH Web and hard-refresh. In native **Files**, open a file named `example.mindmap.md`:
 
-> This package is currently marked `private: true`. These are **source-install instructions**, not an npm registry installation command. See the [complete installation guide](./docs/installation.md) for compatibility checks, updates and verification.
+```markdown
+---
+markmap: true
+---
 
-## Use it
+# My knowledge
+## AI Systems
+- Models
+- Harness
+## Learning
+- Notes
+- Practice
+```
 
-| Action | How |
-| --- | --- |
-| Auto-open a map | Put `markmap: true` in YAML frontmatter and open the Markdown file |
-| Open manually | Better Sidebar file menu → **View as Mindmap** |
-| Edit | Select **Markdown** in the viewer toolbar |
-| Return to map | Select **Mindmap**; it uses the current in-memory draft |
-| Change layout | Choose **Document**, **Tree**, **Two-sided** or **Org chart** |
-| Save | Click **Lưu** (Save); the plugin checks for an external modification before writing |
-| Export | Use **MD ↓**, **SVG ↓** or **PNG ↓** |
+The map opens automatically. Use DSH's document viewer menu to switch back to Markdown. Ordinary .md files keep the native viewer. The suffix, not frontmatter alone, selects native Mindmap.
 
-Changes in the Markdown editor are **not saved automatically**. Exporting Markdown downloads the current draft; use **Lưu** to persist changes to the source file.
+## Features
 
-## Compatibility
+| Feature | Native Files | Better Sidebar (optional) |
+| --- | --- | --- |
+| Open compound mindmap suffix | Yes | With explicit frontmatter or manual action |
+| Pan, zoom, Fit, Level, layouts, wrapping | Yes | Yes |
+| Markdown draft editing and MD/SVG/PNG export | Yes | Yes |
+| Relative Markdown links | Native resource navigation | Sidebar navigation |
+| Auto-detect ordinary .md with markmap: true | Not yet | Yes |
+| Save directly to source | Not yet | Yes, guarded by modification time |
 
-| Component | Requirement |
-| --- | --- |
-| DSH | `>=0.2.2-0 <0.3.0` |
-| Better Sidebar | Optional, `^0.32.1` for integrated mode |
-| Node.js | `>=24.9.0` |
-| UI | DSH Web |
-| License | [MIT](./LICENSE) |
+**Native files are read through DSH's authenticated document preview.** Edits are in-memory drafts; exporting downloads a copy. The plugin does not add a filesystem write API. Native document files are limited to 2 MB of UTF-8 text. Mobile controls share the same map engine.
 
-This is a community plugin, not an official DeepSeek Harness release.
+### Mindmap Studio
+
+Where the DSH native tab guide exposes Mindmap Studio, create or import a local Markdown file and export your draft. Native Files is the recommended workspace workflow; Studio is an additional local-file tool.
+
+## Optional Better Sidebar
+
+Users of Better Sidebar 0.32.x (`^0.32.1`) can keep its automatic frontmatter detection, **View as Mindmap** file action, editor action and guarded file saves. The adapter activates only when its service is present.
+
+## Architecture
+
+```mermaid
+flowchart TD
+  DSH[DSH native] --> Native[Native document adapter]
+  DSH --> Studio[Local Studio]
+  Native --> Core[Shared Mindmap core]
+  Studio --> Core
+  Better[Better Sidebar - optional] --> Adapter[Optional adapter]
+  Adapter --> Core
+  Core --> Markmap[Markmap]
+```
+
+Native-first means core features must not require third-party plugins. See [AGENTS.md](./AGENTS.md) and [development](./docs/development.md).
+
+## Compatibility and status
+
+- DSH engine range: `>=0.2.2-0 <0.3.0`; native preview requires the document registry.
+- Better Sidebar: optional `^0.32.1`.
+- Node.js: `>=24.9.0`; DSH Web.
+- Experimental source installation; package is private, not an npm registry release.
+- v0.2.1 native opening was user-confirmed; v0.2.2 refactor needs its own live acceptance.
 
 ## Documentation
 
-- [Install, upgrade & verify](./docs/installation.md)
-- [Developer guide & architecture](./docs/development.md)
-- [Troubleshooting](./docs/troubleshooting.md)
-- [Release notes](./CHANGELOG.md)
-- [Vietnamese README / README tiếng Việt](./README.vi.md)
+[Installation](./docs/installation.md) · [Development](./docs/development.md) · [Mobile testing](./docs/mobile-testing.md) · [Troubleshooting](./docs/troubleshooting.md) · [Changelog](./CHANGELOG.md)
 
-## Contributing
-
-Issues, reproducible bug reports and pull requests are welcome. Before submitting changes, run `pnpm run check` and, for UI changes, verify them in a compatible DSH Web profile. Please include browser-console errors and host/plugin versions when reporting failures.
-
-Built with [Markmap](https://markmap.js.org/) and Better Sidebar. Distributed under the [MIT License](./LICENSE).
+Issues and pull requests welcome. Include host version, optional integration status and reproducible steps. Built with [Markmap](https://markmap.js.org/), licensed under [MIT](./LICENSE).

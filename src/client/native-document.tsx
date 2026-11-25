@@ -27,7 +27,7 @@ function NativeDocument(props: NativeProps) {
   try { content = decodeMindmap(props.content.data) }
   catch (error) { return h('p', { role: 'alert' }, String(error)) }
   return h('div', { style: { height: '100%', minHeight: 0, minWidth: 0, whiteSpace: 'normal' }, 'data-dsh-mindmap-document': '' },
-    h(MindmapPanel, { key: props.resourceAddress, path: file.path, scope: { sessionId: file.sessionId }, content,
+    h(MindmapPanel, { key: props.resourceAddress, path: file.path, content,
       onOpenLink: (target: string) => tab.actions.openResource(sessionFileAddress(file.sessionId, target)),
     }))
 }

@@ -1,74 +1,36 @@
-# Development and architecture
+# Development — Native First
 
-[← README](../README.md) · [Installation](./installation.md) · [Troubleshooting](./troubleshooting.md)
+[README](../README.md) · [AGENTS.md](../AGENTS.md)
 
-## Development loop
+## Architecture
 
-Work inside this standalone plugin checkout with Node.js **24.9+** and pnpm:
+| Module | Responsibility |
+| --- | --- |
+| src/client/index.tsx | Native-first client registration; optional integration |
+| src/client/native-document.tsx | Native document registry and resource navigation |
+| src/client/native-file.ts | Session resource addresses and bounded UTF-8 decode |
+| src/client/native-studio.tsx | Optional native page entry |
+| src/client/standalone.tsx | Local import/new draft |
+| src/client/preview.tsx | Host-independent map UI, draft, exports, callbacks |
+| src/client/better-sidebar.tsx | Optional Better Sidebar routes, guarded writes and viewer registrations |
+| src/client/detect.ts | Frontmatter detection for optional integration |
+| src/index.ts | Host entry; no custom file I/O |
+
+The core accepts callbacks for link opening and saving, not host services. Native document metadata selects compound suffixes only; ordinary Markdown remains under DSH's own renderer. The official workspaceFiles service currently exposes reads/list/search/stat/watch, not mutations. Native edits export a copy. Do not implement unsafe replacement writes or broad Markdown takeovers.
+
+## Checks
 
 ```bash
 pnpm install
-pnpm typecheck
-pnpm test
-pnpm build
-```
-
-Or run the complete gate:
-
-```bash
 pnpm run check
 ```
 
-The `build` command runs `tsdown` followed by `node scripts/check-client-bundle.mjs`. The resulting browser bundle must register **exactly one** valid DSH client module factory under `dsh-mindmap`, with no Node-only module imports or unknown DSH module-table imports.
+TypeScript, Vitest, tsdown and the browser bundle audit must pass. Do not weaken the loader audit. Keep generated bundle imports browser-safe.
 
-**Do not loosen the audit to make a failed build pass.** Correct the browser resolution/bundling boundary instead.
+## Acceptance matrix
 
-## Project map
+First disable/uninstall Better Sidebar and restart DSH. Open *.mindmap.md through native Files; verify Markdown fallback, relative links, draft export, zoom, fit, levels, wrapping, layout, dark/light mode and mobile. Open ordinary .md and verify its normal viewer. If Studio is visible, test local import and new map. Then enable Better Sidebar and repeat; verify explicit menu actions, frontmatter detection, guarded save and stale modification conflicts. Disable again and verify cleanup. Record exact DSH version and profile. v0.2.1 native file opening was reported working on 0.2.2-rc.5; this does not establish full acceptance of v0.2.2.
 
-| File | Responsibility |
-| --- | --- |
-| `src/index.ts` | Host entry: schema/registration; intentionally does not perform workspace file I/O |
-| `src/client/index.tsx` | Registers native Mindmap Studio and optional Better Sidebar auto/manual viewers, a dedicated tab, a file action and an editor action; cleans up registrations |
-| `src/client/detect.ts` | Conservative Markdown path/frontmatter detection; regular Markdown falls back to the original viewer |
-| `src/client/preview.tsx` | Markmap UI, Markdown editing, layout selection, exports, guarded saves, resize/refit behavior |
-| `tsdown.config.ts` | Host ESM and browser CJS builds; browser import boundary and post-minify loader wrapper |
-| `scripts/check-client-bundle.mjs` | Browser bundle integrity checks |
-| `tests/detect.test.ts` | Detection regression tests |
+## Roadmap
 
-Native Studio uses user-selected browser files (2 MB maximum), shares MindmapPanel, and exports downloads without host I/O. Relative workspace links require the Better Sidebar adapter.
-
-## Key implementation rules
-
-- **Respect ordinary Markdown.** Automatic map mode requires a `.md` / `.markdown` file with explicit `markmap: true` frontmatter. Do not claim arbitrary files solely because of their extension. Structured `markmap:` options alone are not currently recognized by auto-detection.
-- **Keep source as truth.** The map visualizes the editable Markdown draft. Switching views does not automatically persist edits.
-- **Use Better Sidebar routes for workspace I/O.** Reads use `sidebar/api/fs.read` and writes use `sidebar/write`, authenticated and scoped to the active session. Do not introduce arbitrary filesystem URLs.
-- **Reject stale writes.** Saves send the original `expectedMtimeMs` and surface conflicts rather than silently overwriting external edits.
-- **Keep a browser-safe bundle.** Built-in Node imports are not client externals; browser-specific resolutions and polyfills belong at the bundle boundary.
-- **Dispose contributions.** The plugin registers five Better Sidebar contributions and releases them on cleanup.
-- **Keep the viewer responsive.** The canvas fills the panel under the toolbar and calls `fit()` after its viewport actually changes.
-
-## Manual acceptance checklist
-
-The code-level gate cannot prove host compatibility. After `pnpm run check`, verify against a compatible DSH Web profile:
-
-- [ ] Native Mindmap Studio opens with Better Sidebar absent; create/import/export and mobile controls work.
-- [ ] Both native and integrated tabs work when Better Sidebar is installed.
-- [ ] Unmarked Markdown still uses the original viewer.
-- [ ] Marked Markdown auto-opens as a map; pan, zoom and folding work.
-- [ ] File action and editor/tab action open mind-map mode manually.
-- [ ] Both views share one editable draft; explicit save persists safely.
-- [ ] Simulated stale modification time rejects an overwrite.
-- [ ] Markdown, SVG and PNG exports work.
-- [ ] Sidebar resize, split view, light/dark themes and reload behave acceptably.
-- [ ] For touch and narrow panels, follow the [mobile acceptance checklist](./mobile-testing.md).
-- [ ] Plugin disable/reload removes registrations without residual UI.
-
-The previous README recorded this live acceptance as **pending**, not passed.
-
-## Planned, not implemented
-
-AI node expansion, source links and in-chat mind maps were identified as future ideas in the original README. They are **not** presented as shipping features.
-
-## Contributing
-
-Include an issue/PR description, exact DSH and Better Sidebar versions, steps to reproduce, logs where relevant, and the result of `pnpm run check`. Avoid committing generated fix notes to the README hero; capture the change in [CHANGELOG.md](../CHANGELOG.md) and troubleshooting details here or in [troubleshooting](./troubleshooting.md).
+Native direct save only with documented authorized conflict-aware write API; frontmatter-only auto detection only with safe content-aware host extension point. See [mobile checklist](./mobile-testing.md).

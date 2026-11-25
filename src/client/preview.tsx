@@ -5,12 +5,7 @@ import { deepestParentLevel, shouldRefitView } from './mobile.ts'
 import type { FoldTreeNode } from './mobile.ts'
 import { toSVGString } from '@markmap/render'
 import { toPNG } from '@markmap/canvas'
-import type { BetterSidebarService } from 'dsh-better-sidebar'
 
-export interface Scope {
-  sessionId: string
-  cwd?: string
-}
 
 interface MapEngine {
   result?: Parameters<typeof toSVGString>[0]
@@ -23,15 +18,10 @@ interface MapEngine {
 }
 
 type MapElement = HTMLElement & { markdown: string; options: { wrapWidth: number }; mm?: MapEngine }
-type ReadResult =
-  | { kind: 'text'; content: string; mtimeMs?: number; size: number }
-  | { kind: 'binary' | 'too-large'; size: number }
-
 export interface MindmapPanelProps {
   path: string
-  scope: Scope
-  service?: BetterSidebarService
-  onOpenLink?: (target: string) => void
+  onSave?: (draft: string, expectedMtimeMs: number) => Promise<number>
+  onOpenLink?: (target: string) => void | Promise<void>
   onOpenLocal?: () => void
   onNewLocal?: () => void
   onDirtyChange?: (dirty: boolean) => void
@@ -91,69 +81,12 @@ function download(content: Blob, name: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 10000)
 }
 
-function routePayload(scope: Scope, path: string): Record<string, string> {
-  return {
-    sessionId: scope.sessionId,
-    path,
-    ...(scope.cwd ? { cwd: scope.cwd } : {}),
-  }
-}
-
-async function readEnvelope<T>(response: Response): Promise<T> {
-  const value = await response.json().catch(() => null) as {
-    ok?: boolean
-    value?: T
-    error?: { message?: string; code?: string }
-  } | null
-  if (!response.ok || value?.ok !== true || value.value === undefined) {
-    throw new Error(value?.error?.message ?? ('HTTP ' + response.status))
-  }
-  return value.value
-}
-
-/** Only Better Sidebar's authenticated, session-scoped routes touch workspace files. */
-export async function readMarkdown(
-  service: BetterSidebarService,
-  scope: Scope,
-  path: string,
-  signal?: AbortSignal,
-): Promise<ReadResult> {
-  const response = await fetch(service.hostRouteUrl('sidebar/api/fs.read'), {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(routePayload(scope, path)),
-    signal,
-  })
-  return readEnvelope<ReadResult>(response)
-}
-
-async function saveMarkdown(
-  service: BetterSidebarService,
-  scope: Scope,
-  path: string,
-  content: string,
-  expectedMtimeMs: number,
-): Promise<number> {
-  const query = new URLSearchParams({
-    ...routePayload(scope, path),
-    expectedMtimeMs: String(expectedMtimeMs),
-  })
-  const response = await fetch(service.hostRouteUrl('sidebar/write?' + query.toString()), {
-    method: 'POST',
-    headers: { 'content-type': 'text/plain; charset=utf-8' },
-    body: content.replace(/\r\n/g, '\n'),
-  })
-  const result = await readEnvelope<{ ok: true; mtimeMs?: number }>(response)
-  if (typeof result.mtimeMs !== 'number') throw new Error('Máy chủ không trả về mốc phiên bản mới.')
-  return result.mtimeMs
-}
-
 /**
  * Markdown and mindmap use the same live draft. Writes are explicit and
  * conditional on the mtime baseline, so another editor cannot be overwritten.
  */
 export function MindmapPanel(props: MindmapPanelProps) {
-  const { path, scope, service, content, mtimeMs, onReload } = props
+  const { path, content, mtimeMs, onReload, onOpenLink, onSave } = props
   const [view, setView] = useState<'mindmap' | 'markdown'>('mindmap')
   const [layout, setLayout] = useState<'document' | 'tree' | 'two-sided' | 'org-chart'>('document')
   const [nodeWidth, setNodeWidth] = useState('auto')
@@ -216,20 +149,14 @@ export function MindmapPanel(props: MindmapPanelProps) {
       if (!target) return
       event.preventDefault()
       event.stopPropagation()
-      if (props.onOpenLink) {
-        try { props.onOpenLink(target) } catch { setFeedback('Không thể mở file: ' + target) }
-        return
-      }
-      if (!service) { setFeedback('Mở file liên kết bằng nút Mở Markdown; chế độ độc lập không truy cập workspace.'); return }
-      void readMarkdown(service, scope, target).then(() => {
-        service.openFile(scope, target)
-      }).catch(() => {
+      if (!onOpenLink) { setFeedback('Mở file liên kết bằng nút Mở Markdown; bản nháp cục bộ không truy cập workspace.'); return }
+      void Promise.resolve().then(() => onOpenLink(target)).catch(() => {
         setFeedback('Không thể mở file: ' + target)
       })
     }
     element.addEventListener('click', onLink, true)
     return () => element.removeEventListener('click', onLink, true)
-  }, [view, path, scope.sessionId, scope.cwd, service, props.onOpenLink])
+  }, [view, path, onOpenLink])
 
   // Markmap renders asynchronously. Read available fold levels from the actual
   // rendered tree, just like its native toolbar, rather than guessing from MD.
@@ -303,7 +230,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
   }, [mobileMenuOpen])
 
   const save = async () => {
-    if (!service || !dirty || saving) return
+    if (!onSave || !dirty || saving) return
     if (baseline === undefined) {
       setFeedback('Không có phiên bản gốc an toàn để ghi. Hãy tải lại file.')
       return
@@ -311,7 +238,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
     setSaving(true)
     setFeedback('')
     try {
-      const nextMtime = await saveMarkdown(service, scope, path, draft, baseline)
+      const nextMtime = await onSave(draft, baseline)
       setSaved(draft)
       setBaseline(nextMtime)
       setFeedback('Đã lưu Markdown.')
@@ -407,7 +334,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
   }
   const exportMarkdown = () => {
     download(new Blob([draft], { type: 'text/markdown;charset=utf-8' }), fileStem(path) + '.md')
-    if (!service) setFeedback('Đã yêu cầu tải bản Markdown; file gốc không bị ghi đè.')
+    if (!onSave) setFeedback('Đã yêu cầu tải bản Markdown; file gốc không bị ghi đè.')
   }
   const localAction = (action?: () => void) => {
     if (dirty && !window.confirm('Bản nháp đã thay đổi. Tiếp tục và bỏ bản nháp?')) return
@@ -468,10 +395,10 @@ export function MindmapPanel(props: MindmapPanelProps) {
       layoutSelect(),
       nodeWidthSelect(),
       h('span', { className: 'dsh-mindmap-grow' }),
-      service ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving) : null,
+      onSave ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving) : null,
       props.onOpenLocal ? button('Mở Markdown', () => localAction(props.onOpenLocal)) : null,
       props.onNewLocal ? button('Tạo mới', () => localAction(props.onNewLocal)) : null,
-      service ? button('Nạp lại', reload, undefined, !onReload) : null,
+      onReload ? button('Nạp lại', reload, undefined, !onReload) : null,
       button('MD ↓', exportMarkdown),
       button('SVG ↓', () => { void exportImage('svg') }, undefined, view !== 'mindmap' || busyExport),
       button('PNG ↓', () => { void exportImage('png') }, undefined, view !== 'mindmap' || busyExport),
@@ -481,7 +408,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
         button('Mindmap', () => switchView('mindmap'), view === 'mindmap'),
         button('Markdown', () => switchView('markdown'), view === 'markdown'),
       ),
-      service ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving, {
+      onSave ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving, {
         'aria-label': dirty ? 'Lưu thay đổi Markdown' : 'Không có thay đổi để lưu',
       }) : button('MD ↓', exportMarkdown),
       h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
@@ -497,7 +424,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
           ? h('div', { className: 'dsh-mindmap-mobile-popover', role: 'group', 'aria-label': 'Tùy chọn và xuất file' },
               h('label', null, 'Bố cục', layoutSelect()),
               h('label', null, 'Chiều rộng node', nodeWidthSelect()),
-              service ? button('Nạp lại', reload, undefined, !onReload) : null,
+              onReload ? button('Nạp lại', reload, undefined, !onReload) : null,
               props.onOpenLocal ? button('Mở Markdown', () => localAction(props.onOpenLocal)) : null,
               props.onNewLocal ? button('Tạo mới', () => localAction(props.onNewLocal)) : null,
               button('Xuất Markdown', () => { exportMarkdown(); setMobileMenuOpen(false) }),
@@ -541,33 +468,3 @@ export function MindmapPanel(props: MindmapPanelProps) {
   )
 }
 
-/** Manual Open with / file action mode: reads the same session-scoped file. */
-export function ManualMindmap(props: { path: string; scope: Scope; service: BetterSidebarService }) {
-  const { path, scope, service } = props
-  const [reload, setReload] = useState(0)
-  const [data, setData] = useState<ReadResult | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    setLoading(true)
-    setError('')
-    void readMarkdown(service, scope, path, controller.signal)
-      .then(result => { if (!controller.signal.aborted) setData(result) })
-      .catch(reason => {
-        if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : String(reason))
-      })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return () => controller.abort()
-  }, [service, scope.sessionId, scope.cwd, path, reload])
-
-  if (loading) return h('p', { role: 'status' }, 'Đang mở Markdown…')
-  if (error) return h('p', { role: 'alert' }, 'Không thể đọc file: ' + error)
-  if (data?.kind !== 'text') return h('p', { role: 'status' }, 'File quá lớn hoặc không phải văn bản để hiển thị dưới dạng Mindmap.')
-  return h(MindmapPanel, {
-    key: path + ':' + reload,
-    path, scope, service, content: data.content, mtimeMs: data.mtimeMs,
-    onReload: () => setReload(v => v + 1),
-  })
-}

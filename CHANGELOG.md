@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2 — Native First
+
+- Separate native document, native Studio, optional Better Sidebar adapter, and service-independent Mindmap panel.
+- Native-first README, installation, development rules and acceptance checklist.
+- Native write-back and frontmatter-only routing remain gated on supported DSH APIs.
+- v0.2.1 native opening reported working by user; v0.2.2 live acceptance pending.
+
+
 ## 0.2.1
 
 - Native DSH document preview for compound Mindmap Markdown suffixes, without Better Sidebar.

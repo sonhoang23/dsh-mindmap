@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [Installation](./installation.md) · [Changelog](../CHANGELOG.md)
 
-These notes consolidate the technical history formerly at the top of the README. Diagnose the **first failing step**, not downstream symptoms. The latest source version documented here is **v0.1.5**.
+These notes consolidate the technical history formerly at the top of the README. Diagnose the **first failing step**, not downstream symptoms. The current source version is **v0.2.2**.
 
 ## Plugin reports "Package unavailable" / incompatible DSH version
 
@@ -14,7 +14,7 @@ Get-Command dsh | Select-Object Source
 node --version
 ```
 
-This plugin declares DSH `>=0.2.2-0 <0.3.0`, Node `>=24.9.0`, and Better Sidebar peer dependency `^0.32.1`. Historical DSH 0.2.1-rc.2 logs were below the required host range; Better Sidebar 0.32.1 targeted the DSH 0.2.2 release-candidate line. Update the compatible **installed** host and peer dependencies; do not bypass version protection with an `allow-version --accept-risk` override.
+This plugin declares DSH `>=0.2.2-0 <0.3.0`, Node `>=24.9.0`, and optional Better Sidebar peer dependency `^0.32.1`. Historical DSH 0.2.1-rc.2 logs were below the required host range; Better Sidebar 0.32.1 targeted the DSH 0.2.2 release-candidate line. Update the compatible **installed** host and peer dependencies; do not bypass version protection with an `allow-version --accept-risk` override.
 
 ## "ReferenceError: module is not defined" in DSH Plugins
 
@@ -34,7 +34,7 @@ dsh plugin --profile web add .
 dsh plugin --profile web install
 ```
 
-Fully restart DSH Web, hard-refresh (`Ctrl+Shift+R`), confirm the plugin manager shows v0.1.5, and inspect the browser console. **The original source notes did not confirm a completed live DSH browser test of this fix.**
+Fully restart DSH Web, hard-refresh (`Ctrl+Shift+R`), confirm the plugin manager shows the installed current version, and inspect the browser console. **The original source notes did not confirm a completed live DSH browser test of this fix.**
 
 ## Bundle audit: "wrong DSH client module id"
 
@@ -81,6 +81,10 @@ The historical `TS5097` issue involved imports ending in `.ts`. The plugin's `ts
 Past logs also showed unresolved official bundle imports (`@deepseek-ai/dsh-experimental-forge-bundle`, `@deepseek-ai/dsh-personalized-recommendations`, `@deepseek-ai/dsh-cua-bundle`) and stale `cordis.patch.yml` targets. These can be independent **host/profile** issues, not Markmap parsing bugs. Back up the profile before changing patches or dependencies, and inspect `dsh web --dump-config`.
 
 A separate workspace's `scripts/build-forks.ps1` summary such as "3 plugin build(s) failed" counts failures **across that workspace**; it does not show three independent failures in this plugin. Diagnose each project individually.
+
+## Native Files shows ordinary Markdown instead of Mindmap
+
+Use a compound suffix `*.mindmap.md` or `*.mindmap.markdown`, verify the active plugin version and native `documentPreviews` support, then rebuild and restart. Frontmatter alone on a normal `.md` file does not select native Mindmap. Studio is not required. Test with Better Sidebar disabled first.
 
 ## Still failing?
 

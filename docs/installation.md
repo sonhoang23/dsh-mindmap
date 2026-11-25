@@ -42,13 +42,13 @@ dsh plugin --profile web add .
 dsh plugin --profile web install
 ```
 
-Then fully stop and restart DSH Web and hard-refresh the browser (`Ctrl+Shift+R` on Windows). Confirm that the DSH plugin manager shows **dsh-mindmap v0.2.0**, with no client-module error.
+Then fully stop and restart DSH Web and hard-refresh the browser (`Ctrl+Shift+R` on Windows). Confirm that the DSH plugin manager shows **dsh-mindmap v0.2.2**, with no client-module error.
 
 > These commands are profile-specific. If your DSH setup uses a profile other than `web`, adapt the profile flag consistently.
 
 ## 4. Verify the UI
 
-Create or open a Markdown file containing:
+Create or open a file named `example.mindmap.md` containing:
 
 ```markdown
 ---
@@ -64,16 +64,7 @@ markmap: true
 - Tests
 ```
 
-First test without Better Sidebar: open Mindmap Studio from the native right sidebar, create/import a Markdown file, edit, export MD/SVG/PNG, and check mobile. Export downloads a copy; it does not write the workspace. Then install Better Sidebar if desired and confirm the following manually:
-
-1. A marked `.md` file displays the mind-map view; a file without that marker still uses the normal Markdown viewer.
-2. **View as Mindmap** works from a file action; the Mindmap tab/editor action is available where the host UI exposes it.
-3. Pan, zoom and branch expansion work. Resize the sidebar and confirm the canvas fills the available height.
-4. Switch between **Mindmap** and **Markdown**; edit, save, and reopen the source file.
-5. Download Markdown, SVG and PNG; confirm each result.
-6. Check light/dark appearance, browser console, and expected cleanup after removing or disabling the plugin where relevant.
-
-**At the time these docs were reorganized, successful end-to-end DSH Web verification had not been confirmed by the repository notes.**
+First disable Better Sidebar and open the compound-suffix file from native Files. Verify automatic Mindmap, normal Markdown files, native viewer menu, links, exports, zoom, Fit, Level, layouts, wrapping and mobile. Studio is optional if exposed in the native guide. Native edits export a copy, not a workspace write. Then optionally enable Better Sidebar and check frontmatter recognition, menu actions, guarded saves and stale-write rejection. Native file opening was reported working in v0.2.1 on DSH 0.2.2-rc.5; v0.2.2 acceptance remains pending.
 
 ## Updating an existing clone safely
 
