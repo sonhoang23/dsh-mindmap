@@ -58,7 +58,7 @@ The map opens automatically. Use DSH's document viewer menu to switch back to Ma
 
 ### Viewer customization
 
-Open **Tùy chỉnh** on desktop or **⋯** on compact panels to preview themes, color schemes, branch palettes, spacing and Fit/Zoom presets. **Theo file** uses document frontmatter or Markmap defaults; viewer overrides do not change Markdown. Opening Level is a browser preference applied on the next open/reload (root depth 0); the regular Level action folds immediately. Both image exports use the effective light/dark appearance at download time. See [acceptance checks](./docs/development.md#viewer-options-acceptance).
+Open **Tùy chỉnh** on desktop or **⋯** on compact panels to preview themes, color schemes, branch palettes, spacing and Fit/Zoom presets. **Theo file** uses document frontmatter or Markmap defaults; viewer overrides do not change Markdown. Opening Level is a browser preference applied on the next open/reload (root depth 0); the regular Level action folds immediately. Both image exports use the effective light/dark appearance at download time. Large PNGs are automatically scaled to fit a bounded canvas and retried at lower resolution on known canvas failures; use SVG for lossless zoom. See [acceptance checks](./docs/development.md#viewer-options-acceptance).
 
 ### Mindmap Studio
 

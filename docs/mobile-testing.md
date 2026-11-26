@@ -47,3 +47,7 @@ Test these interactions:
 - On a narrow native Files panel, open ⋯; scroll the options, select each control and dismiss via outside tap or Escape. Verify touch targets, no horizontal overflow, readable themes, and access to existing export actions.
 - Compare both Fit/Zoom presets with document defaults on a small map and a dense six-level map; verify pinch, pan, Fit, orientation change and SVG/PNG export. Record observed framing improvement before finalizing presets.
 - Reopen with the saved opening Level, manually fold/unfold, change theme and switch Markdown/Mindmap. Check that ordinary editing retains folds. Test warnings and system dark-mode changes, then repeat with optional Better Sidebar enabled.
+
+### Large PNG regression
+
+- Open a dense map whose default 2x PNG would be at least 2564 × 6599. Export PNG in native Files on desktop and iOS/Android; verify the file opens, contains every visible branch and retains the selected light/dark scheme. If downscaled, check the feedback. Repeat with Better Sidebar enabled and verify SVG remains available even if PNG fails.

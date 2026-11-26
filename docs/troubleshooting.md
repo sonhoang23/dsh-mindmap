@@ -86,6 +86,10 @@ A separate workspace's `scripts/build-forks.ps1` summary such as "3 plugin build
 
 Use a compound suffix `*.mindmap.md` or `*.mindmap.markdown`, verify the active plugin version and native `documentPreviews` support, then rebuild and restart. Frontmatter alone on a normal `.md` file does not select native Mindmap. Studio is not required. Test with Better Sidebar disabled first.
 
+## Large PNG: "Could not export a … image"
+
+Markmap's default 2x export may exceed a browser's canvas pixel or memory limit even when each dimension is valid (e.g. 2564 × 6599). The adaptive exporter caps the padded canvas at 12 Mi pixels and 8192 px per edge, then retries known allocation/encoding failures at half scale up to twice. A reduced-resolution PNG includes the same visible map, not a cropped screenshot. If PNG still fails, export SVG or fold some branches and retry. Test real desktop and mobile browsers after rebuilding the client; limits vary by browser and device.
+
 ## Still failing?
 
 Attach the first build error or browser console stack trace, `dsh --version`, `node --version`, the plugin version shown in DSH, and the output of `pnpm run check`. Separate source/build validation from end-to-end DSH Web acceptance.

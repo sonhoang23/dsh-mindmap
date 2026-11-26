@@ -5,6 +5,7 @@ import { deepestParentLevel, shouldRefitView } from './mobile.ts'
 import type { FoldTreeNode } from './mobile.ts'
 import { toSVGString } from '@markmap/render'
 import { toPNG } from '@markmap/canvas'
+import { exportAdaptivePng } from './png-export.ts'
 import { applyInitialLevel, defaultPreferences, exportScheme, initialLevels, readInitialLevel, resolveViewerOptions, visibleWarnings, writeInitialLevel } from './viewer-options.ts'
 import type { InitialLevel, ViewerPreferences, ViewOptions } from './viewer-options.ts'
 
@@ -291,7 +292,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
       if (kind === 'svg') {
         download(new Blob([toSVGString(result, { colorScheme: scheme })], { type: 'image/svg+xml;charset=utf-8' }), fileStem(path) + '.svg')
       } else {
-        const png: unknown = await toPNG(result, { colorScheme: scheme })
+        const { png, reduced } = await exportAdaptivePng<unknown>(result.bounds, scheme, options => toPNG(result, options))
         if (png instanceof Blob) {
           download(png, fileStem(path) + '.png')
         } else if (png instanceof Uint8Array || png instanceof ArrayBuffer) {
@@ -302,9 +303,10 @@ export function MindmapPanel(props: MindmapPanelProps) {
         } else {
           throw new Error('Định dạng PNG không được hỗ trợ trong trình duyệt này.')
         }
+        if (reduced) setFeedback('Đã giảm độ phân giải PNG để phù hợp với trình duyệt. Xuất SVG nếu cần giữ độ nét khi phóng to.')
       }
     } catch (error) {
-      setFeedback('Không thể xuất ảnh: ' + (error instanceof Error ? error.message : String(error)))
+      setFeedback('Không thể xuất ảnh: ' + (error instanceof Error ? error.message : String(error)) + (kind === 'png' ? '. Hãy thử xuất SVG hoặc gập bớt nhánh.' : ''))
     } finally {
       setBusyExport(false)
     }

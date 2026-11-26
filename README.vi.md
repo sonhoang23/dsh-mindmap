@@ -58,7 +58,7 @@ Native đọc nội dung qua trình xem tài liệu đã xác thực của DSH, 
 
 ### Tùy chỉnh hiển thị
 
-Mở **Tùy chỉnh** trên máy tính hoặc **⋯** trên panel nhỏ để đổi theme, chế độ màu, bảng màu nhánh, khoảng cách và preset Fit/Zoom. **Theo file** dùng frontmatter hoặc mặc định Markmap; các tùy chỉnh không sửa Markdown. Level khi mở được ghi nhớ trên trình duyệt, áp dụng lần mở/nạp tiếp theo (gốc depth 0); nút Level vẫn gập ngay. SVG và PNG dùng cùng chế độ sáng/tối tại thời điểm xuất. Xem [kiểm thử nghiệm thu](./docs/development.md#viewer-options-acceptance).
+Mở **Tùy chỉnh** trên máy tính hoặc **⋯** trên panel nhỏ để đổi theme, chế độ màu, bảng màu nhánh, khoảng cách và preset Fit/Zoom. **Theo file** dùng frontmatter hoặc mặc định Markmap; các tùy chỉnh không sửa Markdown. Level khi mở được ghi nhớ trên trình duyệt, áp dụng lần mở/nạp tiếp theo (gốc depth 0); nút Level vẫn gập ngay. SVG và PNG dùng cùng chế độ sáng/tối tại thời điểm xuất. PNG lớn tự giảm độ phân giải để phù hợp với canvas và thử lại khi gặp lỗi canvas đã biết; dùng SVG để phóng to không mất nét. Xem [kiểm thử nghiệm thu](./docs/development.md#viewer-options-acceptance).
 
 ### Mindmap Studio
 

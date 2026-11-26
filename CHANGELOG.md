@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — Large PNG export resilience
+
+- Bound padded PNG dimensions to 12 Mi pixels and 8192 px per edge before allocating canvas; preserve 2x scale for smaller maps.
+- Retry known canvas allocation/encoding failures up to twice at half scale, report reduced resolution, and offer SVG if PNG still fails. Keep the current theme and visible map unchanged.
+- Add regression coverage for the reported 2564 × 6599 output and retry behavior. Rebuild the generated client and verify actual desktop/mobile export before release.
+
 ## Unreleased — Viewer customization (#4–#10)
 
 - Add one shared desktop/mobile options menu for theme, color scheme, branch palette and depth, level/sibling spacing and bounded Fit/Zoom presets.
