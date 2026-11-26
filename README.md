@@ -48,12 +48,17 @@ The map opens automatically. Use DSH's document viewer menu to switch back to Ma
 | --- | --- | --- |
 | Open compound mindmap suffix | Yes | With explicit frontmatter or manual action |
 | Pan, zoom, Fit, Level, layouts, wrapping | Yes | Yes |
+| Viewer themes, colors, spacing, opening level, Fit presets and option warnings | Yes | Yes |
 | Markdown draft editing and MD/SVG/PNG export | Yes | Yes |
 | Relative Markdown links | Native resource navigation | Sidebar navigation |
 | Auto-detect ordinary .md with markmap: true | Not yet | Yes |
 | Save directly to source | Not yet | Yes, guarded by modification time |
 
 **Native files are read through DSH's authenticated document preview.** Edits are in-memory drafts; exporting downloads a copy. The plugin does not add a filesystem write API. Native document files are limited to 2 MB of UTF-8 text. Mobile controls share the same map engine.
+
+### Viewer customization
+
+Open **Tùy chỉnh** on desktop or **⋯** on compact panels to preview themes, color schemes, branch palettes, spacing and Fit/Zoom presets. **Theo file** uses document frontmatter or Markmap defaults; viewer overrides do not change Markdown. Opening Level is a browser preference applied on the next open/reload (root depth 0); the regular Level action folds immediately. Both image exports use the effective light/dark appearance at download time. See [acceptance checks](./docs/development.md#viewer-options-acceptance).
 
 ### Mindmap Studio
 

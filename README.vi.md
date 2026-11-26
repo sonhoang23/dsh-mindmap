@@ -48,12 +48,17 @@ Mindmap tự hiển thị. Có thể chuyển về Markdown bằng menu viewer c
 | --- | --- | --- |
 | Mở file đuôi .mindmap.md | Có | Với frontmatter hoặc mở thủ công |
 | Zoom, Fit, Level, bố cục, xuống dòng | Có | Có |
+| Theme, màu, khoảng cách, level khi mở, preset Fit và cảnh báo | Có | Có |
 | Chỉnh sửa bản nháp và xuất MD/SVG/PNG | Có | Có |
 | Liên kết Markdown tương đối | Điều hướng native | Điều hướng Sidebar |
 | Tự nhận diện .md thường có markmap: true | Chưa | Có |
 | Lưu trực tiếp file gốc | Chưa | Có, kiểm tra xung đột |
 
 Native đọc nội dung qua trình xem tài liệu đã xác thực của DSH, giới hạn 2 MB văn bản UTF-8. Chỉnh sửa là bản nháp; xuất Markdown tải bản sao, không ghi đè file. Không mở thêm API ghi filesystem. Giao diện mobile dùng chung bộ hiển thị.
+
+### Tùy chỉnh hiển thị
+
+Mở **Tùy chỉnh** trên máy tính hoặc **⋯** trên panel nhỏ để đổi theme, chế độ màu, bảng màu nhánh, khoảng cách và preset Fit/Zoom. **Theo file** dùng frontmatter hoặc mặc định Markmap; các tùy chỉnh không sửa Markdown. Level khi mở được ghi nhớ trên trình duyệt, áp dụng lần mở/nạp tiếp theo (gốc depth 0); nút Level vẫn gập ngay. SVG và PNG dùng cùng chế độ sáng/tối tại thời điểm xuất. Xem [kiểm thử nghiệm thu](./docs/development.md#viewer-options-acceptance).
 
 ### Mindmap Studio
 

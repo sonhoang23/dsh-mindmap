@@ -41,3 +41,9 @@ Test these interactions:
 - No custom gesture handlers are installed. If touch behavior still fails, diagnose Markmap and the host's pointer/scroll chain before implementing a parallel gesture engine.
 - Running DSH inside a narrow host pane may impose limitations outside this plugin's CSS.
 - A source change is not a verified installation; run `pnpm run check`, rebuild and reinstall the linked plugin, restart DSH Web, and perform manual testing before release.
+
+### Viewer options (#4–#10)
+
+- On a narrow native Files panel, open ⋯; scroll the options, select each control and dismiss via outside tap or Escape. Verify touch targets, no horizontal overflow, readable themes, and access to existing export actions.
+- Compare both Fit/Zoom presets with document defaults on a small map and a dense six-level map; verify pinch, pan, Fit, orientation change and SVG/PNG export. Record observed framing improvement before finalizing presets.
+- Reopen with the saved opening Level, manually fold/unfold, change theme and switch Markdown/Mindmap. Check that ordinary editing retains folds. Test warnings and system dark-mode changes, then repeat with optional Better Sidebar enabled.
