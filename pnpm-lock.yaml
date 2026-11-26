@@ -14,9 +14,15 @@ importers:
       '@markmap/element':
         specifier: 1.1.1
         version: 1.1.1
+      '@markmap/parse':
+        specifier: 1.1.1
+        version: 1.1.1
       '@markmap/render':
         specifier: 1.1.0
         version: 1.1.0
+      '@markmap/view':
+        specifier: 1.1.1
+        version: 1.1.1
       buffer:
         specifier: ^6.0.3
         version: 6.0.3

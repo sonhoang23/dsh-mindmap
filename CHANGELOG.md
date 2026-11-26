@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Viewer customization (#4–#10)
+
+- Add one shared desktop/mobile options menu for theme, color scheme, branch palette and depth, level/sibling spacing and bounded Fit/Zoom presets.
+- Respect frontmatter in document mode; apply explicit viewer overrides in memory without touching Markdown drafts or saves. Render the selected scheme and export both SVG and PNG with the same effective light/dark appearance.
+- Remember opening Level in browser storage, apply only on a new map/reload, and preserve manual folds when switching to the Markdown editor or changing appearance.
+- Surface and clear Markmap configuration warnings; redact unknown theme/layout values. Add regression tests and native-first acceptance checks.
+- Live desktop/mobile visual and export acceptance, including viewport preset benefits, remains pending. Rebuild generated client before distributing.
+
 ## 0.2.2 — Native First
 
 - Separate native document, native Studio, optional Better Sidebar adapter, and service-independent Mindmap panel.

@@ -34,3 +34,14 @@ First disable/uninstall Better Sidebar and restart DSH. Open *.mindmap.md throug
 ## Roadmap
 
 Native direct save only with documented authorized conflict-aware write API; frontmatter-only auto detection only with safe content-aware host extension point. See [mobile checklist](./mobile-testing.md).
+
+## Viewer options acceptance
+
+Source-level tests cover frontmatter precedence, bounded presets, opening Level, warnings and export scheme. Run the full check/build before using the generated client. Do not ship or close issues based on source review alone.
+
+1. Disable Better Sidebar. Open a compound-suffix map containing theme: cards, colorScheme: dark, layout: org-chart, foldLevel: 2, custom color/spacing/fit options. Check Theo file, every override, reset, then export Markdown and verify the original bytes have not changed.
+2. Preview Classic/Cards/Minimal with each palette and scheme (including changing system light/dark while Auto is selected). Check text/branch readability and compare SVG and PNG with the current scheme. Minimal ignores palette/depth; org-chart sibling spacing is tripled.
+3. Open a small map (root and three branches), a dense map (at least 100 branches, six levels, long labels), and a narrow/mobile panel (320–640px). Compare document default to both viewport presets; record whether each preset improves framing, Fit shows every visible node, zoom/pinch/pan limits remain usable, resize refit and exports work. If no benefit, remove the preset before closing #10.
+4. Select an opening Level, reopen/reload, switch documents, and change manual folds; change appearance and toggle Markdown/editor back. Existing folds should remain, and new maps should use the selected opening Level. Test storage disabled and reset to Theo file.
+5. Try invalid theme, spacing, color and unknown option keys; warnings must appear without raw option values, disappear on correction, and not change Markdown. Check screen-reader access.
+6. Repeat with Better Sidebar enabled, then disable it again. Record DSH version, desktop browser, iOS/Android browser, results and screenshots. No live acceptance is implied by this checklist.

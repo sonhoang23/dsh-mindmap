@@ -5,10 +5,14 @@ import { deepestParentLevel, shouldRefitView } from './mobile.ts'
 import type { FoldTreeNode } from './mobile.ts'
 import { toSVGString } from '@markmap/render'
 import { toPNG } from '@markmap/canvas'
+import { applyInitialLevel, defaultPreferences, exportScheme, initialLevels, readInitialLevel, resolveViewerOptions, visibleWarnings, writeInitialLevel } from './viewer-options.ts'
+import type { InitialLevel, ViewerPreferences, ViewOptions } from './viewer-options.ts'
 
 
 interface MapEngine {
   result?: Parameters<typeof toSVGString>[0]
+  options: ViewOptions
+  setOptions(options: ViewOptions): void
   fit(): void
   zoomIn(): void
   zoomOut(): void
@@ -17,7 +21,7 @@ interface MapEngine {
   tree?: FoldTreeNode
 }
 
-type MapElement = HTMLElement & { markdown: string; options: { wrapWidth: number }; mm?: MapEngine }
+type MapElement = HTMLElement & { markdown: string; options: ViewOptions; warnings?: readonly string[]; mm?: MapEngine }
 export interface MindmapPanelProps {
   path: string
   onSave?: (draft: string, expectedMtimeMs: number) => Promise<number>
@@ -38,7 +42,7 @@ const CSS = [
   '.dsh-mindmap button:focus-visible,.dsh-mindmap select:focus-visible {outline:2px solid currentColor;outline-offset:2px;}',
   '.dsh-mindmap button[aria-pressed="true"] {background:var(--dsw-alias-bg-layer-3,#8883);font-weight:600;}',
   '.dsh-mindmap button:disabled {opacity:.5;cursor:default;}',
-  '.dsh-mindmap-view {position:absolute;inset:0;display:block;width:100%;height:100%;min-height:0;touch-action:none;overscroll-behavior:contain;--mm-bg:transparent;}',
+  '.dsh-mindmap-view {position:absolute;inset:0;display:block;width:100%;height:100%;min-height:0;touch-action:none;overscroll-behavior:contain;}',
   '.dsh-mindmap-editor {position:absolute;inset:0;display:block;width:100%;height:100%;min-height:0;box-sizing:border-box;resize:none;border:0;outline:0;padding:16px;background:transparent;color:inherit;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;}',
   '.dsh-mindmap-body {position:relative;flex:1 1 0;min-width:0;min-height:0;overflow:hidden;}',
   '.dsh-mindmap-feedback {margin:0;padding:6px 12px;font-size:12px;color:var(--dsw-alias-text-secondary,inherit);}',
@@ -47,6 +51,9 @@ const CSS = [
   '.dsh-mindmap-mobile-menu {position:relative;flex:none;}',
   '.dsh-mindmap-mobile-popover {position:absolute;top:calc(100% + 7px);right:0;z-index:15;display:grid;gap:7px;padding:12px;width:264px;max-width:calc(100cqw - 22px);max-height:min(64dvh,420px);overflow:auto;background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));color:var(--dsw-alias-text-primary,inherit);border:1px solid var(--dsw-alias-border-subtle,#8887);border-radius:10px;box-shadow:0 8px 24px #0003;}',
   '.dsh-mindmap-mobile-popover button {width:100%;text-align:left;}',
+  '.dsh-mindmap-settings-note {font-size:11px;margin:0;line-height:1.4;}',
+  '.dsh-mindmap-warnings {flex:none;max-height:100px;overflow:auto;padding:6px 12px;font-size:12px;border-bottom:1px solid var(--dsw-alias-border-subtle,#8887);}',
+  '.dsh-mindmap-warnings ul {margin:4px 0;padding-left:18px;overflow-wrap:anywhere;}',
   '.dsh-mindmap-mobile-popover label {display:grid;gap:4px;font-size:12px;}',
   '.dsh-mindmap-mobile-popover select {width:100%;min-height:44px;box-sizing:border-box;font:inherit;font-size:16px;color:inherit;background:var(--dsw-alias-bg-layer-1,transparent);border:1px solid var(--dsw-alias-border-subtle,#8887);border-radius:6px;padding:8px;}',
   '@media (pointer:coarse) {.dsh-mindmap-toolbar-desktop button {min-height:44px;}}',
@@ -92,7 +99,11 @@ export function MindmapPanel(props: MindmapPanelProps) {
   const [nodeWidth, setNodeWidth] = useState('auto')
   const [compactPanel, setCompactPanel] = useState(() => window.innerWidth <= 640)
   const panelRef = useRef<HTMLDivElement | null>(null)
-  const wrapWidth = nodeWidth === 'auto' ? (compactPanel ? 180 : 280) : Number(nodeWidth)
+  const autoWidth = compactPanel ? 180 : 280
+  const [preferences, setPreferences] = useState<ViewerPreferences>(defaultPreferences)
+  const [initialLevel, setInitialLevel] = useState<InitialLevel>(readInitialLevel)
+  const [mapEpoch, setMapEpoch] = useState(0)
+  const [warnings, setWarnings] = useState<string[]>([])
   const [draft, setDraft] = useState(content)
   const [saved, setSaved] = useState(content)
   const [baseline, setBaseline] = useState(mtimeMs)
@@ -104,6 +115,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null)
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null)
   const mapRef = useRef<MapElement | null>(null)
+  const initializedMap = useRef<MapElement | null>(null)
   const dirty = draft !== saved
   useEffect(() => { props.onDirtyChange?.(dirty) }, [dirty, props.onDirtyChange])
 
@@ -125,13 +137,29 @@ export function MindmapPanel(props: MindmapPanelProps) {
     return () => observer.disconnect()
   }, [])
 
+  // Keep the element mounted when switching to the editor so existing fold
+  // state survives a Markdown round trip. Recreate only for a new document or
+  // explicit reload. The initial Level setting is not a live fold command.
   useEffect(() => {
-    if (view === 'mindmap' && mapRef.current) mapRef.current.options = { wrapWidth }
-  }, [view, wrapWidth])
-
-  useEffect(() => {
-    if (view === 'mindmap' && mapRef.current) mapRef.current.markdown = draft
-  }, [view, draft])
+    if (view !== 'mindmap') return
+    const element = mapRef.current
+    if (!element) return
+    const initial = initializedMap.current !== element
+    const resolved = resolveViewerOptions(draft, preferences, layout, nodeWidth, autoWidth)
+    if (initial) element.options = { wrapWidth: autoWidth }
+    if (initial || element.markdown !== draft) element.markdown = draft
+    // The element has already parsed the source and applied document options.
+    // Override only the effective in-memory view through Markmap's public API.
+    const mm = element.mm
+    if (!mm) return
+    mm.setOptions(resolved.options)
+    setWarnings(visibleWarnings([...(element.warnings ?? []), ...resolved.warnings]))
+    if (initial) {
+      initializedMap.current = element
+      applyInitialLevel(mm, initialLevel)
+      mm.fit()
+    }
+  }, [view, draft, preferences, layout, nodeWidth, autoWidth, initialLevel, path, mapEpoch])
 
 
   // Markmap uses a shadow root; composedPath exposes the original anchor.
@@ -156,7 +184,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
     }
     element.addEventListener('click', onLink, true)
     return () => element.removeEventListener('click', onLink, true)
-  }, [view, path, onOpenLink])
+  }, [view, path, onOpenLink, mapEpoch])
 
   // Markmap renders asynchronously. Read available fold levels from the actual
   // rendered tree, just like its native toolbar, rather than guessing from MD.
@@ -171,7 +199,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
       element.removeEventListener('render', refreshLevels)
       window.cancelAnimationFrame(frame)
     }
-  }, [view])
+  }, [view, path, mapEpoch])
 
   // Defer refitting until a panel resize settles. Re-fitting on every
   // ResizeObserver callback resets user zoom/pan during mobile gestures.
@@ -209,7 +237,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
       element.removeEventListener('pointerdown', markInteraction)
       element.removeEventListener('wheel', markInteraction)
     }
-  }, [view])
+  }, [view, path, mapEpoch])
 
   useEffect(() => {
     if (!mobileMenuOpen) return
@@ -250,18 +278,20 @@ export function MindmapPanel(props: MindmapPanelProps) {
   }
 
   const exportImage = async (kind: 'svg' | 'png') => {
-    const result = mapRef.current?.mm?.result
+    const mm = mapRef.current?.mm
+    const result = mm?.result
     if (!result) {
       setFeedback('Chuyển sang Mindmap và đợi sơ đồ hiển thị trước khi xuất ảnh.')
       return
     }
+    const scheme = exportScheme(mm?.options.colorScheme, window.matchMedia('(prefers-color-scheme: dark)').matches)
     setBusyExport(true)
     setFeedback('')
     try {
       if (kind === 'svg') {
-        download(new Blob([toSVGString(result)], { type: 'image/svg+xml;charset=utf-8' }), fileStem(path) + '.svg')
+        download(new Blob([toSVGString(result, { colorScheme: scheme })], { type: 'image/svg+xml;charset=utf-8' }), fileStem(path) + '.svg')
       } else {
-        const png: unknown = await toPNG(result, { colorScheme: 'light' })
+        const png: unknown = await toPNG(result, { colorScheme: scheme })
         if (png instanceof Blob) {
           download(png, fileStem(path) + '.png')
         } else if (png instanceof Uint8Array || png instanceof ArrayBuffer) {
@@ -325,11 +355,62 @@ export function MindmapPanel(props: MindmapPanelProps) {
     h('option', { value: '400' }, 'Wide (400px)'),
     h('option', { value: '0' }, 'Unlimited'),
   )
+  const selectPreference = (key: keyof ViewerPreferences, label: string, options: [string, string][]) =>
+    h('label', { key }, label,
+      h('select', {
+        'aria-label': label,
+        value: preferences[key],
+        onChange: (event: { target: { value: string } }) =>
+          setPreferences(previous => ({ ...previous, [key]: event.target.value })),
+      }, h('option', { value: 'document' }, 'Theo file'),
+      ...options.map(([value, text]) => h('option', { key: value, value }, text))),
+    )
+  const setOpeningLevel = (value: InitialLevel) => {
+    if (!initialLevels.includes(value)) return
+    setInitialLevel(value)
+    writeInitialLevel(value)
+  }
+  const appearanceControls = () => h('div', { style: { display: 'grid', gap: 7 } },
+    h('p', { className: 'dsh-mindmap-settings-note' }, 'Chỉ thay đổi cách hiển thị, không sửa Markdown. Theo file = dùng frontmatter hoặc mặc định Markmap.'),
+    selectPreference('theme', 'Theme', [['classic', 'Classic'], ['cards', 'Cards'], ['minimal', 'Minimal']]),
+    selectPreference('scheme', 'Chế độ màu', [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto (hệ thống)']]),
+    selectPreference('palette', 'Màu nhánh (Classic/Cards)', [['ocean', 'Ocean'], ['contrast', 'Contrast'], ['mono', 'Một màu']]),
+    selectPreference('colorDepth', 'Độ sâu màu (gốc = 1)', [['0', 'Không giới hạn'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']]),
+    h('p', { className: 'dsh-mindmap-settings-note' }, 'Minimal không dùng bảng màu nhánh. Các node sâu hơn kế thừa màu của cấp đã chọn.'),
+    selectPreference('levelGap', 'Khoảng cách cấp', [['40', 'Gọn (40px)'], ['80', 'Chuẩn (80px)'], ['120', 'Rộng (120px)']]),
+    selectPreference('siblingGap', 'Khoảng cách nhánh cùng cấp', [['2', 'Gọn (2px)'], ['5', 'Chuẩn (5px)'], ['12', 'Rộng (12px)']]),
+    h('p', { className: 'dsh-mindmap-settings-note' }, 'Org chart dùng khoảng cách cùng cấp gấp 3 lần.'),
+    h('label', null, 'Level khi mở (gốc = 0)',
+      h('select', {
+        'aria-label': 'Level khi mở hoặc nạp lại file',
+        value: initialLevel,
+        onChange: (event: { target: { value: string } }) => setOpeningLevel(event.target.value as InitialLevel),
+      }, ...initialLevels.map(level => h('option', { key: level, value: level },
+        level === 'document' ? 'Theo file' : level === 'all' ? 'Mở tất cả' : 'Level ' + level))),
+    ),
+    h('p', { className: 'dsh-mindmap-settings-note' }, 'Ghi nhớ trên trình duyệt; áp dụng lần mở/nạp tiếp theo. Dùng nút Level để gập ngay.'),
+    selectPreference('viewport', 'Fit / Zoom', [['compact', 'Panel nhỏ (padding 12px)'], ['large', 'Map lớn (padding 24px)']]),
+    h('p', { className: 'dsh-mindmap-settings-note' }, 'Preset chỉ giới hạn zoom tương tác; Fit vẫn có thể thu nhỏ hơn để hiện toàn bộ sơ đồ.'),
+    button('Khôi phục theo file', () => {
+      setPreferences(defaultPreferences)
+      setLayout('document')
+      setNodeWidth('auto')
+      setOpeningLevel('document')
+    }),
+  )
+  const optionsButton = () => h('button', {
+    type: 'button', ref: mobileMenuButtonRef,
+    'aria-label': 'Tùy chọn sơ đồ',
+    'aria-expanded': mobileMenuOpen, 'aria-haspopup': 'true',
+    onClick: () => setMobileMenuOpen(open => !open),
+  }, compactPanel ? '⋯' : 'Tùy chỉnh')
+
   const reload = () => {
     if (dirty && !window.confirm('Bỏ các thay đổi chưa lưu và nạp lại?')) return
     setMobileMenuOpen(false)
     setFeedback('')
     setDraft(saved)
+    setMapEpoch(epoch => epoch + 1)
     onReload?.()
   }
   const exportMarkdown = () => {
@@ -394,6 +475,10 @@ export function MindmapPanel(props: MindmapPanelProps) {
       button('Markdown', () => switchView('markdown'), view === 'markdown'),
       layoutSelect(),
       nodeWidthSelect(),
+      !compactPanel ? h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
+        optionsButton(),
+        mobileMenuOpen ? h('div', { className: 'dsh-mindmap-mobile-popover', role: 'group', 'aria-label': 'Tùy chỉnh cách hiển thị' }, appearanceControls()) : null,
+      ) : null,
       h('span', { className: 'dsh-mindmap-grow' }),
       onSave ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving) : null,
       props.onOpenLocal ? button('Mở Markdown', () => localAction(props.onOpenLocal)) : null,
@@ -411,19 +496,13 @@ export function MindmapPanel(props: MindmapPanelProps) {
       onSave ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving, {
         'aria-label': dirty ? 'Lưu thay đổi Markdown' : 'Không có thay đổi để lưu',
       }) : button('MD ↓', exportMarkdown),
-      h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
-        h('button', {
-          type: 'button',
-          ref: mobileMenuButtonRef,
-          'aria-label': 'Tùy chọn sơ đồ',
-          'aria-expanded': mobileMenuOpen,
-          'aria-haspopup': 'true',
-          onClick: () => setMobileMenuOpen(open => !open),
-        }, '⋯'),
+      compactPanel ? h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
+        optionsButton(),
         mobileMenuOpen
           ? h('div', { className: 'dsh-mindmap-mobile-popover', role: 'group', 'aria-label': 'Tùy chọn và xuất file' },
               h('label', null, 'Bố cục', layoutSelect()),
               h('label', null, 'Chiều rộng node', nodeWidthSelect()),
+              appearanceControls(),
               onReload ? button('Nạp lại', reload, undefined, !onReload) : null,
               props.onOpenLocal ? button('Mở Markdown', () => localAction(props.onOpenLocal)) : null,
               props.onNewLocal ? button('Tạo mới', () => localAction(props.onNewLocal)) : null,
@@ -433,29 +512,32 @@ export function MindmapPanel(props: MindmapPanelProps) {
               button('Mở tất cả nhánh', () => mapAction('expandAll'), undefined, view !== 'mindmap'),
             )
           : null,
-      ),
+      ) : null,
     ),
     feedback ? h('p', { className: 'dsh-mindmap-feedback' + (feedback.startsWith('Không') ? ' dsh-mindmap-error' : ''), role: 'status' }, feedback) : null,
+    view === 'mindmap' && warnings.length ? h('div', { className: 'dsh-mindmap-warnings', role: 'status', 'aria-live': 'polite' },
+      h('strong', null, 'Cảnh báo cấu hình Markmap (' + warnings.length + ')'),
+      h('ul', null, ...warnings.map(warning => h('li', { key: warning }, warning))),
+    ) : null,
     h('div', { className: 'dsh-mindmap-body' },
-      view === 'mindmap'
-        ? h('markmap-view', {
+      h('markmap-view', {
+            key: path + ':' + mapEpoch,
             ref: (el: HTMLElement | null) => { mapRef.current = el as MapElement | null },
             className: 'dsh-mindmap-view',
             // <markmap-view>'s own :host sets height:400px. Inline sizing
             // wins over that shadow default and fills the flex viewport.
-            style: { position: 'absolute', inset: 0, width: '100%', height: '100%', minHeight: 0, touchAction: 'none' },
-            ...(layout === 'document' ? {} : { layout }),
+            style: { position: 'absolute', inset: 0, width: '100%', height: '100%', minHeight: 0, touchAction: 'none', visibility: view === 'mindmap' ? 'visible' : 'hidden' },
             toolbar: '',
-            'color-scheme': 'auto',
+            'aria-hidden': view !== 'mindmap',
             'aria-label': 'Sơ đồ tư duy của ' + fileStem(path),
-          })
-        : h('textarea', {
+          }),
+      view === 'markdown' ? h('textarea', {
             className: 'dsh-mindmap-editor',
             value: draft,
             onChange: (event: { target: { value: string } }) => setDraft(event.target.value),
             spellCheck: false,
             'aria-label': 'Chỉnh sửa Markdown',
-          }),
+          }) : null,
       view === 'mindmap'
         ? h('div', { className: 'dsh-mindmap-mobile-controls', role: 'group', 'aria-label': 'Điều khiển sơ đồ' },
             foldLevelSelect(),

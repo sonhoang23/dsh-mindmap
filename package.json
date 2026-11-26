@@ -46,9 +46,11 @@
     "check": "pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
-    "@markmap/element": "1.1.1",
-    "@markmap/render": "1.1.0",
     "@markmap/canvas": "1.1.1",
+    "@markmap/element": "1.1.1",
+    "@markmap/parse": "1.1.1",
+    "@markmap/render": "1.1.0",
+    "@markmap/view": "1.1.1",
     "buffer": "^6.0.3"
   },
   "peerDependencies": {
