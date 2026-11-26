@@ -46,7 +46,9 @@ const CSS = [
   '.dsh-mindmap-view {position:absolute;inset:0;display:block;width:100%;height:100%;min-height:0;touch-action:none;overscroll-behavior:contain;}',
   '.dsh-mindmap-editor {position:absolute;inset:0;display:block;width:100%;height:100%;min-height:0;box-sizing:border-box;resize:none;border:0;outline:0;padding:16px;background:transparent;color:inherit;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;}',
   '.dsh-mindmap-body {position:relative;flex:1 1 0;min-width:0;min-height:0;overflow:hidden;}',
-  '.dsh-mindmap-feedback {margin:0;padding:6px 12px;font-size:12px;color:var(--dsw-alias-text-secondary,inherit);}',
+  '.dsh-mindmap-feedback {position:absolute;z-index:10;top:8px;right:8px;display:flex;align-items:flex-start;gap:6px;box-sizing:border-box;width:max-content;max-width:min(360px,calc(100% - 16px));max-height:calc(100% - 16px);padding:6px 8px 6px 12px;overflow:auto;overflow-wrap:anywhere;border:1px solid var(--dsw-alias-border-subtle,#8887);border-radius:8px;background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));color:var(--dsw-alias-text-primary,inherit);font-size:12px;line-height:1.45;box-shadow:0 2px 10px #0003;}',
+  '.dsh-mindmap-feedback span {min-width:0;align-self:center;}',
+  '.dsh-mindmap-feedback button {flex:none;min-height:32px;min-width:32px;font-size:18px;line-height:1;padding:0;}',
   '.dsh-mindmap-error {color:var(--dsw-alias-state-error-primary,#c33);}',
   '.dsh-mindmap-toolbar-mobile,.dsh-mindmap-mobile-controls {display:none;}',
   '.dsh-mindmap-mobile-menu {position:relative;flex:none;}',
@@ -62,6 +64,7 @@ const CSS = [
   ' .dsh-mindmap-toolbar-desktop {display:none;}',
   ' .dsh-mindmap-toolbar-mobile {display:flex;gap:6px;flex-wrap:nowrap;padding:6px 8px;min-height:56px;box-sizing:border-box;}',
   ' .dsh-mindmap-toolbar-mobile button {min-height:44px;min-width:44px;font-size:13px;padding:6px 8px;}',
+  ' .dsh-mindmap-feedback button {min-height:44px;min-width:44px;}',
   ' .dsh-mindmap-mobile-tabs {display:flex;flex:1;min-width:0;gap:3px;}',
   ' .dsh-mindmap-mobile-tabs button {flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
   ' .dsh-mindmap-mobile-controls {position:absolute;z-index:5;bottom:max(12px,env(safe-area-inset-bottom,0px));right:12px;display:flex;gap:4px;padding:4px;border:1px solid var(--dsw-alias-border-subtle,#8887);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));border-radius:10px;box-shadow:0 2px 10px #0002;}',
@@ -119,6 +122,16 @@ export function MindmapPanel(props: MindmapPanelProps) {
   const initializedMap = useRef<MapElement | null>(null)
   const dirty = draft !== saved
   useEffect(() => { props.onDirtyChange?.(dirty) }, [dirty, props.onDirtyChange])
+
+  // Successful actions should not leave persistent notices over the map.
+  // Keep errors and actionable warnings until the user dismisses them.
+  useEffect(() => {
+    if (!feedback.startsWith('Đã ')) return
+    const timer = window.setTimeout(() => {
+      setFeedback(current => current === feedback ? '' : current)
+    }, 4000)
+    return () => window.clearTimeout(timer)
+  }, [feedback])
 
   useEffect(() => {
     if (dirty) return // Do not silently discard unsaved edits during a host reload.
@@ -303,7 +316,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
         } else {
           throw new Error('Định dạng PNG không được hỗ trợ trong trình duyệt này.')
         }
-        if (reduced) setFeedback('Đã giảm độ phân giải PNG để phù hợp với trình duyệt. Xuất SVG nếu cần giữ độ nét khi phóng to.')
+        if (reduced) setFeedback('Đã giảm độ phân giải PNG. Dùng SVG nếu cần ảnh nét hơn.')
       }
     } catch (error) {
       setFeedback('Không thể xuất ảnh: ' + (error instanceof Error ? error.message : String(error)) + (kind === 'png' ? '. Hãy thử xuất SVG hoặc gập bớt nhánh.' : ''))
@@ -516,12 +529,15 @@ export function MindmapPanel(props: MindmapPanelProps) {
           : null,
       ) : null,
     ),
-    feedback ? h('p', { className: 'dsh-mindmap-feedback' + (feedback.startsWith('Không') ? ' dsh-mindmap-error' : ''), role: 'status' }, feedback) : null,
     view === 'mindmap' && warnings.length ? h('div', { className: 'dsh-mindmap-warnings', role: 'status', 'aria-live': 'polite' },
       h('strong', null, 'Cảnh báo cấu hình Markmap (' + warnings.length + ')'),
       h('ul', null, ...warnings.map(warning => h('li', { key: warning }, warning))),
     ) : null,
     h('div', { className: 'dsh-mindmap-body' },
+      feedback ? h('div', { className: 'dsh-mindmap-feedback' + (feedback.startsWith('Không') ? ' dsh-mindmap-error' : '') },
+        h('span', { role: 'status' }, feedback),
+        h('button', { type: 'button', 'aria-label': 'Đóng thông báo', title: 'Đóng thông báo', onClick: () => setFeedback('') }, '×'),
+      ) : null,
       h('markmap-view', {
             key: path + ':' + mapEpoch,
             ref: (el: HTMLElement | null) => { mapRef.current = el as MapElement | null },

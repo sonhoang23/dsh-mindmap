@@ -51,3 +51,5 @@ Test these interactions:
 ### Large PNG regression
 
 - Open a dense map whose default 2x PNG would be at least 2564 × 6599. Export PNG in native Files on desktop and iOS/Android; verify the file opens, contains every visible branch and retains the selected light/dark scheme. If downscaled, check the feedback. Repeat with Better Sidebar enabled and verify SVG remains available even if PNG fails.
+
+- For a reduced PNG export, verify the brief notice overlays the map without reducing its viewport height, disappears after four seconds, and can be closed immediately with ×. Confirm save success also clears automatically, export errors stay until dismissed or replaced, and opening options still works above the notice. Repeat on desktop and check that dismissing does not reset map zoom or folds.

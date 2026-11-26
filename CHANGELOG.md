@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — Dismissible feedback
+
+- Show action feedback in a compact overlay without resizing the mindmap viewport. Add a touch-friendly dismiss button, shorten the reduced PNG resolution notice, and auto-dismiss successful action notices after four seconds. Errors and actionable warnings stay until dismissed or replaced.
+- Rebuild the client and verify mobile/desktop feedback behavior in the live host.
+
 ## Unreleased — Large PNG export resilience
 
 - Bound padded PNG dimensions to 12 Mi pixels and 8192 px per edge before allocating canvas; preserve 2x scale for smaller maps.
