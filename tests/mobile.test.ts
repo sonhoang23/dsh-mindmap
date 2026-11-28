@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deepestParentLevel, shouldRefitView } from '../src/client/mobile.ts'
+import { deepestParentLevel, shouldRefitView, readingFoldLevel, parseMobilePreferences } from '../src/client/mobile.ts'
 
 describe('mobile viewport refit', () => {
   const initial = { width: 390, height: 680 }
@@ -51,5 +51,21 @@ describe('Level selection for compact mindmap controls', () => {
     const updated = { children: [{ children: [{ children: [{ children: [] }] }] }] }
     expect(deepestParentLevel(original)).toBe(1)
     expect(deepestParentLevel(updated)).toBe(2)
+  })
+})
+
+describe('mobile reader preferences and opening levels', () => {
+  it('defaults safely and accepts only supported stored options', () => {
+    expect(parseMobilePreferences(null)).toEqual({ mode: 'overview', autoHide: false })
+    expect(parseMobilePreferences('{')).toEqual({ mode: 'overview', autoHide: false })
+    expect(parseMobilePreferences('{"mode":"reading","autoHide":true}')).toEqual({ mode: 'reading', autoHide: true })
+    expect(parseMobilePreferences('{"mode":"other","autoHide":"true"}')).toEqual({ mode: 'overview', autoHide: false })
+  })
+  it('folds only dense deep trees and preserves explicit opening Level', () => {
+    const tree = { children: Array.from({ length: 8 }, () => ({ children: Array.from({ length: 5 }, () => ({ children: [{}] })) })) }
+    expect(readingFoldLevel(tree, false)).toBe(2)
+    expect(readingFoldLevel(tree, true)).toBeUndefined()
+    expect(readingFoldLevel({ children: [{}] }, false)).toBeUndefined()
+    expect(readingFoldLevel(undefined, false)).toBeUndefined()
   })
 })

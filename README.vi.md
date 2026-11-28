@@ -54,7 +54,7 @@ Mindmap tự hiển thị. Có thể chuyển về Markdown bằng menu viewer c
 | Tự nhận diện .md thường có markmap: true | Chưa | Có |
 | Lưu trực tiếp file gốc | Chưa | Có, kiểm tra xung đột |
 
-Native đọc nội dung qua trình xem tài liệu đã xác thực của DSH, giới hạn 2 MB văn bản UTF-8. Chỉnh sửa là bản nháp; xuất Markdown tải bản sao, không ghi đè file. Không mở thêm API ghi filesystem. Giao diện mobile dùng chung bộ hiển thị.
+Native đọc nội dung qua trình xem tài liệu đã xác thực của DSH, giới hạn 2 MB văn bản UTF-8. Chỉnh sửa là bản nháp; xuất Markdown tải bản sao, không ghi đè file. Không mở thêm API ghi filesystem. Giao diện mobile dùng chung bộ hiển thị. Panel nhỏ ưu tiên canvas, có Focus Mode, Level/Fit, tự ẩn điều khiển tùy chọn và ghi nhớ Overview/Reading; chỉnh sửa và xuất file trong ⋯. Focus chỉ phủ ứng dụng web, không ẩn thanh trình duyệt.
 
 ### Tùy chỉnh hiển thị
 

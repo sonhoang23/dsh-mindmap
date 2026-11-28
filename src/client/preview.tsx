@@ -1,7 +1,8 @@
-import { createElement as h, useEffect, useRef, useState } from 'react'
+import { createElement as h, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import '@markmap/element'
 import { resolveMarkdownLink } from './links.ts'
-import { deepestParentLevel, shouldRefitView } from './mobile.ts'
+import { deepestParentLevel, shouldRefitView, readMobilePreferences, writeMobilePreferences, readingFoldLevel } from './mobile.ts'
+import type { MobileView } from './mobile.ts'
 import type { FoldTreeNode } from './mobile.ts'
 import { toSVGString } from '@markmap/render'
 import { toPNG } from '@markmap/canvas'
@@ -60,20 +61,30 @@ const CSS = [
   '.dsh-mindmap-mobile-popover label {display:grid;gap:4px;font-size:12px;}',
   '.dsh-mindmap-mobile-popover select {width:100%;min-height:44px;box-sizing:border-box;font:inherit;font-size:16px;color:inherit;background:var(--dsw-alias-bg-layer-1,transparent);border:1px solid var(--dsw-alias-border-subtle,#8887);border-radius:6px;padding:8px;}',
   '@media (pointer:coarse) {.dsh-mindmap-toolbar-desktop button {min-height:44px;}}',
-  '@container (max-width: 640px) {',
-  ' .dsh-mindmap-toolbar-desktop {display:none;}',
-  ' .dsh-mindmap-toolbar-mobile {display:flex;gap:6px;flex-wrap:nowrap;padding:6px 8px;min-height:56px;box-sizing:border-box;}',
-  ' .dsh-mindmap-toolbar-mobile button {min-height:44px;min-width:44px;font-size:13px;padding:6px 8px;}',
-  ' .dsh-mindmap-feedback button {min-height:44px;min-width:44px;}',
-  ' .dsh-mindmap-mobile-tabs {display:flex;flex:1;min-width:0;gap:3px;}',
-  ' .dsh-mindmap-mobile-tabs button {flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
-  ' .dsh-mindmap-mobile-controls {position:absolute;z-index:5;bottom:max(12px,env(safe-area-inset-bottom,0px));right:12px;display:flex;gap:4px;padding:4px;border:1px solid var(--dsw-alias-border-subtle,#8887);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));border-radius:10px;box-shadow:0 2px 10px #0002;}',
-  ' .dsh-mindmap-mobile-controls button {min-width:44px;min-height:44px;font-size:18px;font-weight:600;}',
-  ' .dsh-mindmap-mobile-controls select {min-height:44px;min-width:78px;max-width:110px;box-sizing:border-box;padding:6px;border:1px solid var(--dsw-alias-border-subtle,#8887);border-radius:7px;background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));color:inherit;font:inherit;font-size:14px;touch-action:manipulation;}',
+  '.dsh-mindmap-compact .dsh-mindmap-toolbar-desktop {display:none;}',
+  '.dsh-mindmap-compact .dsh-mindmap-toolbar-mobile {display:flex;gap:6px;flex-wrap:nowrap;padding:6px 8px;min-height:56px;box-sizing:border-box;}',
+  '.dsh-mindmap-compact .dsh-mindmap-toolbar-mobile button {min-height:44px;min-width:44px;font-size:13px;padding:6px 8px;}',
+  '.dsh-mindmap-compact .dsh-mindmap-feedback button {min-height:44px;min-width:44px;}',
+  '.dsh-mindmap-compact .dsh-mindmap-mobile-tabs {display:flex;flex:1;min-width:0;gap:3px;}',
+  '.dsh-mindmap-compact .dsh-mindmap-mobile-tabs button {flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+  '.dsh-mindmap-compact .dsh-mindmap-mobile-controls {position:absolute;z-index:5;bottom:max(12px,env(safe-area-inset-bottom,0px));right:12px;display:flex;gap:4px;padding:4px;border:1px solid var(--dsw-alias-border-subtle,#8887);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));border-radius:10px;box-shadow:0 2px 10px #0002;}',
+  '.dsh-mindmap-compact .dsh-mindmap-mobile-controls button {min-width:44px;min-height:44px;font-size:18px;font-weight:600;}',
+  '.dsh-mindmap-compact .dsh-mindmap-mobile-controls select {min-height:44px;min-width:78px;max-width:110px;box-sizing:border-box;padding:6px;border:1px solid var(--dsw-alias-border-subtle,#8887);border-radius:7px;background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));color:inherit;font:inherit;font-size:14px;touch-action:manipulation;}',
+  '.dsh-mindmap-compact .dsh-mindmap-editor {font-size:16px;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));}',
+  '.dsh-mindmap-compact markmap-view::part(toolbar) {display:none;}',
 
-  ' .dsh-mindmap-editor {font-size:16px;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));}',
-  ' markmap-view::part(toolbar) {display:none;}',
-  '}',
+  '.dsh-mindmap-reader-top {display:none;}',
+  '.dsh-mindmap-compact .dsh-mindmap-reader-top {position:absolute;inset:0 0 auto;z-index:12;display:flex;justify-content:space-between;align-items:flex-start;padding:8px;pointer-events:none;}',
+  '.dsh-mindmap-reader-top button,.dsh-mindmap-reader-top .dsh-mindmap-mobile-menu {pointer-events:auto;}',
+  '.dsh-mindmap-reader-top > button,.dsh-mindmap-reader-top .dsh-mindmap-mobile-menu > button {min-width:44px;min-height:44px;font-size:20px;padding:4px 8px;background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));box-shadow:0 2px 8px #0002;}',
+  '.dsh-mindmap.dsh-mindmap-focus {position:fixed;inset:0;margin:0;width:100%;height:100%;height:100dvh;max-width:none;max-height:none;padding:0;border:0;box-sizing:border-box;z-index:2147483000;background:var(--dsw-alias-bg-base,#fff);}',
+  '.dsh-mindmap-focus::backdrop {background:var(--dsw-alias-bg-base,#fff);}',
+  '.dsh-mindmap-focus .dsh-mindmap-reader-top {padding-top:max(8px,env(safe-area-inset-top,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));}',
+  '.dsh-mindmap-compact .dsh-mindmap-mobile-controls {right:max(8px,env(safe-area-inset-right,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));padding:2px;gap:2px;}',
+  '.dsh-mindmap-compact .dsh-mindmap-mobile-controls select {font-size:16px;}',
+  '.dsh-mindmap-compact .dsh-mindmap-mobile-controls[data-hidden="true"] {display:none;}',
+  '.dsh-mindmap-compact .dsh-mindmap-feedback {top:60px;}',
+  '.dsh-mindmap-compact .dsh-mindmap-warnings {max-height:56px;}',
 ].join('')
 
 function fileStem(path: string): string {
@@ -103,7 +114,15 @@ export function MindmapPanel(props: MindmapPanelProps) {
   const [nodeWidth, setNodeWidth] = useState('auto')
   const [compactPanel, setCompactPanel] = useState(() => window.innerWidth <= 640)
   const panelRef = useRef<HTMLDivElement | null>(null)
-  const autoWidth = compactPanel ? 180 : 280
+  const [focusMode, setFocusMode] = useState(false)
+  const [mobilePreferences, setMobilePreferences] = useState(readMobilePreferences)
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const focusTransitionUntil = useRef(0)
+  const readingTimer = useRef<number | undefined>(undefined)
+  const menuOpenRef = useRef(false)
+  const focusButtonRef = useRef<HTMLButtonElement | null>(null)
+  const compact = compactPanel || focusMode
+  const autoWidth = compact ? 180 : 280
   const [preferences, setPreferences] = useState<ViewerPreferences>(defaultPreferences)
   const [initialLevel, setInitialLevel] = useState<InitialLevel>(readInitialLevel)
   const [mapEpoch, setMapEpoch] = useState(0)
@@ -143,13 +162,84 @@ export function MindmapPanel(props: MindmapPanelProps) {
   useEffect(() => {
     const panel = panelRef.current
     if (!panel) return
-    const update = () => setCompactPanel(panel.clientWidth <= 640)
+    const update = () => { if (!focusMode) setCompactPanel(panel.clientWidth <= 640) }
     update()
     if (typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(update)
     observer.observe(panel)
     return () => observer.disconnect()
-  }, [])
+  }, [focusMode])
+
+  useEffect(() => { writeMobilePreferences(mobilePreferences) }, [mobilePreferences])
+  useEffect(() => { menuOpenRef.current = mobileMenuOpen }, [mobileMenuOpen])
+
+  // Move the existing panel to the top layer without remounting Markmap.
+  // Older Safari falls back to fixed positioning; no Fullscreen API required.
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    if (!panel || !focusMode) return
+    let topLayer = false
+    if (typeof panel.showPopover === 'function') {
+      try {
+        panel.setAttribute('popover', 'manual')
+        panel.showPopover()
+        topLayer = true
+      } catch { panel.removeAttribute('popover') }
+    }
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || menuOpenRef.current) return
+      event.preventDefault()
+      focusTransitionUntil.current = Date.now() + 900
+      setFocusMode(false)
+      window.requestAnimationFrame(() => focusButtonRef.current?.focus())
+    }
+    document.addEventListener('keydown', onEscape)
+    return () => {
+      document.removeEventListener('keydown', onEscape)
+      if (topLayer) {
+        try { panel.hidePopover() } catch { /* host may have removed the panel */ }
+        panel.removeAttribute('popover')
+      }
+    }
+  }, [focusMode])
+
+  useEffect(() => {
+    if (!compact || view !== 'mindmap' || !mobilePreferences.autoHide) {
+      setControlsVisible(true)
+      return
+    }
+    let timeout: number | undefined
+    const reveal = () => {
+      setControlsVisible(true)
+      window.clearTimeout(timeout)
+      timeout = window.setTimeout(() => setControlsVisible(false), 4500)
+    }
+    const panel = panelRef.current
+    reveal()
+    panel?.addEventListener('pointerdown', reveal, { passive: true })
+    panel?.addEventListener('focusin', reveal)
+    return () => {
+      window.clearTimeout(timeout)
+      panel?.removeEventListener('pointerdown', reveal)
+      panel?.removeEventListener('focusin', reveal)
+    }
+  }, [compact, view, mobilePreferences.autoHide, path, focusMode])
+  useEffect(() => () => window.clearTimeout(readingTimer.current), [path, mapEpoch, view])
+
+  const frameReading = (mm: MapEngine) => {
+    window.clearTimeout(readingTimer.current)
+    const level = readingFoldLevel(mm.tree, initialLevel !== 'document')
+    if (level !== undefined) mm.foldToLevel(level)
+    mm.fit()
+    // Use the public zoom command for a dense fitted map; do not mutate Markdown.
+    readingTimer.current = window.setTimeout(() => {
+      const element = mapRef.current
+      if (!element || element.mm !== mm || !mm.result) return
+      const { width, height } = mm.result.bounds
+      if (width > 0 && height > 0 &&
+          Math.min(element.clientWidth / width, element.clientHeight / height) < 0.8) mm.zoomIn()
+    }, 300)
+  }
 
   // Keep the element mounted when switching to the editor so existing fold
   // state survives a Markdown round trip. Recreate only for a new document or
@@ -171,7 +261,8 @@ export function MindmapPanel(props: MindmapPanelProps) {
     if (initial) {
       initializedMap.current = element
       applyInitialLevel(mm, initialLevel)
-      mm.fit()
+      if (compact && mobilePreferences.mode === 'reading') frameReading(mm)
+      else mm.fit()
     }
   }, [view, draft, preferences, layout, nodeWidth, autoWidth, initialLevel, path, mapEpoch])
 
@@ -228,14 +319,20 @@ export function MindmapPanel(props: MindmapPanelProps) {
     const markInteraction = () => {
       lastInteraction = Date.now()
       window.clearTimeout(timeout)
+      window.clearTimeout(readingTimer.current)
     }
     const observer = new ResizeObserver(() => {
       const nextSize = { width: element.clientWidth, height: element.clientHeight }
+      if (Date.now() < focusTransitionUntil.current || (compact && mobilePreferences.mode === 'reading')) {
+        fittedSize = nextSize
+        window.clearTimeout(timeout)
+        return
+      }
       if (!shouldRefitView(fittedSize, nextSize)) return
       window.clearTimeout(timeout)
       timeout = window.setTimeout(() => {
         // Do not override a zoom or pan gesture that just happened.
-        if (Date.now() - lastInteraction < 500) return
+        if (Date.now() - lastInteraction < 500 || Date.now() < focusTransitionUntil.current) return
         const settled = { width: element.clientWidth, height: element.clientHeight }
         if (!shouldRefitView(fittedSize, settled) || !element.mm) return
         element.mm.fit()
@@ -251,7 +348,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
       element.removeEventListener('pointerdown', markInteraction)
       element.removeEventListener('wheel', markInteraction)
     }
-  }, [view, path, mapEpoch])
+  }, [view, path, mapEpoch, compact, mobilePreferences.mode])
 
   useEffect(() => {
     if (!mobileMenuOpen) return
@@ -339,9 +436,30 @@ export function MindmapPanel(props: MindmapPanelProps) {
     ...extra,
   }, label)
 
+  const toggleFocus = () => {
+    focusTransitionUntil.current = Date.now() + 900
+    window.clearTimeout(readingTimer.current)
+    setMobileMenuOpen(false)
+    setFocusMode(value => !value)
+    setControlsVisible(true)
+    window.requestAnimationFrame(() => focusButtonRef.current?.focus())
+  }
   const switchView = (next: 'mindmap' | 'markdown') => {
     setMobileMenuOpen(false)
+    if (next === 'markdown' && focusMode) {
+      focusTransitionUntil.current = Date.now() + 900
+      setFocusMode(false)
+    }
     setView(next)
+  }
+  const selectReadingMode = (mode: MobileView) => {
+    setMobilePreferences(previous => ({ ...previous, mode }))
+    setMobileMenuOpen(false)
+    const mm = mapRef.current?.mm
+    if (!mm) return
+    window.clearTimeout(readingTimer.current)
+    if (mode === 'reading') frameReading(mm)
+    else mm.fit()
   }
   const changeLayout = (value: string) => {
     setLayout(value as typeof layout)
@@ -418,7 +536,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
     'aria-label': 'Tùy chọn sơ đồ',
     'aria-expanded': mobileMenuOpen, 'aria-haspopup': 'true',
     onClick: () => setMobileMenuOpen(open => !open),
-  }, compactPanel ? '⋯' : 'Tùy chỉnh')
+  }, compact ? '⋯' : 'Tùy chỉnh')
 
   const reload = () => {
     if (dirty && !window.confirm('Bỏ các thay đổi chưa lưu và nạp lại?')) return
@@ -442,6 +560,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
       setFeedback('Sơ đồ chưa sẵn sàng. Hãy thử lại khi đã hiển thị.')
       return
     }
+    window.clearTimeout(readingTimer.current)
     mm[action]()
     setMobileMenuOpen(false)
   }
@@ -454,6 +573,7 @@ export function MindmapPanel(props: MindmapPanelProps) {
     defaultValue: '',
     disabled: maxFoldLevel === 0,
     onChange: (event: { target: HTMLSelectElement }) => {
+      window.clearTimeout(readingTimer.current)
       const selected = event.target.value
       event.target.value = ''
       const mm = mapRef.current?.mm
@@ -483,14 +603,45 @@ export function MindmapPanel(props: MindmapPanelProps) {
       title: ariaLabel,
     })
 
-  return h('div', { className: 'dsh-mindmap', ref: panelRef },
+  const mobileMenu = () => h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
+    optionsButton(),
+    mobileMenuOpen ? h('div', { className: 'dsh-mindmap-mobile-popover', role: 'group', 'aria-label': 'Tùy chọn và xuất file' },
+      button(view === 'mindmap' ? 'Chỉnh sửa Markdown' + (dirty ? ' •' : '') : 'Xem Mindmap', () => switchView(view === 'mindmap' ? 'markdown' : 'mindmap')),
+      onSave && dirty ? button('Lưu thay đổi', () => { void save() }, undefined, saving) : null,
+      view === 'mindmap' ? h('div', { style: { display: 'grid', gap: 5 } },
+        button('Overview — tổng quan', () => selectReadingMode('overview'), mobilePreferences.mode === 'overview'),
+        button('Reading — đọc kiến thức', () => selectReadingMode('reading'), mobilePreferences.mode === 'reading'),
+        button(mobilePreferences.autoHide ? 'Tắt tự ẩn điều khiển' : 'Tự ẩn điều khiển', () => {
+          setMobilePreferences(previous => ({ ...previous, autoHide: !previous.autoHide }))
+          setControlsVisible(true)
+        }, mobilePreferences.autoHide),
+        h('label', null, 'Level', foldLevelSelect()),
+        mapControl('Vừa màn hình', 'Vừa màn hình', 'fit'),
+        mapControl('Phóng to (+)', 'Phóng to sơ đồ', 'zoomIn'),
+        mapControl('Thu nhỏ (−)', 'Thu nhỏ sơ đồ', 'zoomOut'),
+        button('Mở tất cả nhánh', () => mapAction('expandAll')),
+      ) : null,
+      warnings.length ? h('details', null, h('summary', null, 'Cảnh báo Markmap (' + warnings.length + ')'), h('ul', null, ...warnings.map(warning => h('li', { key: warning }, warning)))) : null,
+      h('label', null, 'Bố cục', layoutSelect()),
+      h('label', null, 'Chiều rộng node', nodeWidthSelect()),
+      appearanceControls(),
+      onReload ? button('Nạp lại', reload, undefined, !onReload) : null,
+      props.onOpenLocal ? button('Mở Markdown', () => localAction(props.onOpenLocal)) : null,
+      props.onNewLocal ? button('Tạo mới', () => localAction(props.onNewLocal)) : null,
+      button('Xuất Markdown', () => { exportMarkdown(); setMobileMenuOpen(false) }),
+      button('Xuất SVG', () => { void exportImage('svg'); setMobileMenuOpen(false) }, undefined, view !== 'mindmap' || busyExport),
+      button('Xuất PNG', () => { void exportImage('png'); setMobileMenuOpen(false) }, undefined, view !== 'mindmap' || busyExport),
+    ) : null,
+  )
+
+  return h('div', { className: 'dsh-mindmap' + (compact ? ' dsh-mindmap-compact' : '') + (focusMode ? ' dsh-mindmap-focus' : ''), ref: panelRef },
     h('style', null, CSS),
     h('div', { className: 'dsh-mindmap-toolbar dsh-mindmap-toolbar-desktop' },
       button('Mindmap', () => switchView('mindmap'), view === 'mindmap'),
       button('Markdown', () => switchView('markdown'), view === 'markdown'),
       layoutSelect(),
       nodeWidthSelect(),
-      !compactPanel ? h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
+      !compact ? h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
         optionsButton(),
         mobileMenuOpen ? h('div', { className: 'dsh-mindmap-mobile-popover', role: 'group', 'aria-label': 'Tùy chỉnh cách hiển thị' }, appearanceControls()) : null,
       ) : null,
@@ -503,33 +654,15 @@ export function MindmapPanel(props: MindmapPanelProps) {
       button('SVG ↓', () => { void exportImage('svg') }, undefined, view !== 'mindmap' || busyExport),
       button('PNG ↓', () => { void exportImage('png') }, undefined, view !== 'mindmap' || busyExport),
     ),
-    h('div', { className: 'dsh-mindmap-toolbar dsh-mindmap-toolbar-mobile' },
+    compact && view === 'markdown' ? h('div', { className: 'dsh-mindmap-toolbar dsh-mindmap-toolbar-mobile' },
       h('div', { className: 'dsh-mindmap-mobile-tabs', role: 'group', 'aria-label': 'Chế độ xem' },
-        button('Mindmap', () => switchView('mindmap'), view === 'mindmap'),
-        button('Markdown', () => switchView('markdown'), view === 'markdown'),
+        button('Mindmap', () => switchView('mindmap'), false),
+        button('Markdown', () => switchView('markdown'), true),
       ),
-      onSave ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving, {
-        'aria-label': dirty ? 'Lưu thay đổi Markdown' : 'Không có thay đổi để lưu',
-      }) : button('MD ↓', exportMarkdown),
-      compactPanel ? h('div', { className: 'dsh-mindmap-mobile-menu', ref: mobileMenuRef },
-        optionsButton(),
-        mobileMenuOpen
-          ? h('div', { className: 'dsh-mindmap-mobile-popover', role: 'group', 'aria-label': 'Tùy chọn và xuất file' },
-              h('label', null, 'Bố cục', layoutSelect()),
-              h('label', null, 'Chiều rộng node', nodeWidthSelect()),
-              appearanceControls(),
-              onReload ? button('Nạp lại', reload, undefined, !onReload) : null,
-              props.onOpenLocal ? button('Mở Markdown', () => localAction(props.onOpenLocal)) : null,
-              props.onNewLocal ? button('Tạo mới', () => localAction(props.onNewLocal)) : null,
-              button('Xuất Markdown', () => { exportMarkdown(); setMobileMenuOpen(false) }),
-              button('Xuất SVG', () => { void exportImage('svg'); setMobileMenuOpen(false) }, undefined, view !== 'mindmap' || busyExport),
-              button('Xuất PNG', () => { void exportImage('png'); setMobileMenuOpen(false) }, undefined, view !== 'mindmap' || busyExport),
-              button('Mở tất cả nhánh', () => mapAction('expandAll'), undefined, view !== 'mindmap'),
-            )
-          : null,
-      ) : null,
-    ),
-    view === 'mindmap' && warnings.length ? h('div', { className: 'dsh-mindmap-warnings', role: 'status', 'aria-live': 'polite' },
+      onSave ? button('Lưu' + (dirty ? ' •' : ''), () => { void save() }, undefined, !dirty || saving) : button('MD ↓', exportMarkdown),
+      mobileMenu(),
+    ) : null,
+    view === 'mindmap' && warnings.length && !compact ? h('div', { className: 'dsh-mindmap-warnings', role: 'status', 'aria-live': 'polite' },
       h('strong', null, 'Cảnh báo cấu hình Markmap (' + warnings.length + ')'),
       h('ul', null, ...warnings.map(warning => h('li', { key: warning }, warning))),
     ) : null,
@@ -556,12 +689,17 @@ export function MindmapPanel(props: MindmapPanelProps) {
             spellCheck: false,
             'aria-label': 'Chỉnh sửa Markdown',
           }) : null,
-      view === 'mindmap'
-        ? h('div', { className: 'dsh-mindmap-mobile-controls', role: 'group', 'aria-label': 'Điều khiển sơ đồ' },
+      compact && view === 'mindmap' ? h('div', { className: 'dsh-mindmap-reader-top' },
+        button(focusMode ? '×' : '⛶', toggleFocus, focusMode, false, {
+          ref: focusButtonRef, 'aria-label': focusMode ? 'Thoát Focus Mode' : 'Mở Focus Mode',
+          title: focusMode ? 'Thoát Focus Mode' : 'Mở Focus Mode',
+        }),
+        mobileMenu(),
+      ) : null,
+      compact && view === 'mindmap'
+        ? h('div', { className: 'dsh-mindmap-mobile-controls', role: 'group', 'aria-label': 'Điều khiển sơ đồ', 'data-hidden': !controlsVisible && !mobileMenuOpen },
             foldLevelSelect(),
-            mapControl('−', 'Thu nhỏ sơ đồ', 'zoomOut'),
             mapControl('⤢', 'Vừa màn hình', 'fit'),
-            mapControl('+', 'Phóng to sơ đồ', 'zoomIn'),
           )
         : null,
     ),

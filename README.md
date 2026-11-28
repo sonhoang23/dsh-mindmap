@@ -54,7 +54,7 @@ The map opens automatically. Use DSH's document viewer menu to switch back to Ma
 | Auto-detect ordinary .md with markmap: true | Not yet | Yes |
 | Save directly to source | Not yet | Yes, guarded by modification time |
 
-**Native files are read through DSH's authenticated document preview.** Edits are in-memory drafts; exporting downloads a copy. The plugin does not add a filesystem write API. Native document files are limited to 2 MB of UTF-8 text. Mobile controls share the same map engine.
+**Native files are read through DSH's authenticated document preview.** Edits are in-memory drafts; exporting downloads a copy. The plugin does not add a filesystem write API. Native document files are limited to 2 MB of UTF-8 text. Mobile controls share the same map engine. Narrow panels use a canvas-first reader with Focus Mode, Level/Fit, optional auto-hide and saved Overview/Reading preferences; editing and export remain available in ⋯. Focus covers the web app, not browser chrome.
 
 ### Viewer customization
 

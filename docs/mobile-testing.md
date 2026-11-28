@@ -7,8 +7,9 @@ This document covers the compact-screen controls added in the mobile-experience 
 ## What changed
 
 - A compact toolbar is selected by **the available panel width** (container query at 640px), not merely by the browser viewport width. This also helps narrow desktop sidebars.
-- The mobile header keeps the **Mindmap / Markdown** toggle and **Lưu** (Save) button visible; layout, reload and exports move to **⋯**.
-- In a narrow panel, an accessible control cluster provides a **Level** selector plus **−**, **Fit**, and **+**. Level choices reflect the actual rendered tree depth; **All** expands the entire map. Desktop retains Markmap's native toolbar.
+- Mindmap reading removes the fixed toolbar; **⋯** opens editing, saving (if supported), appearance, zoom and export actions. The Markdown editor keeps its toolbar.
+- The compact floating cluster keeps **Level** and **Fit**. Zoom buttons remain in ⋯, and pinch-to-zoom is unchanged. Focus Mode expands the same mounted map over the host using a manual top-layer popover when available, or fixed positioning as fallback. Desktop retains Markmap's native toolbar.
+- Overview fits the current visible tree. Opt-in Reading mode folds dense deep maps to Level 2 when no explicit opening Level is saved, then fits and makes a conservative zoom-in step if still dense. Preferences and optional 4.5-second auto-hide are saved locally; touch/focus reveals controls. Focus is session-only.
 - Touch input is owned only by the map surface (`touch-action: none`); toolbars and Markdown editing retain browser touch handling. Native Markmap gestures are reused rather than replaced.
 - Small view-height changes are ignored; significant panel changes trigger a debounced fit. This limits disruption to manual pan/zoom while mobile browser chrome shifts.
 - Mobile Markdown editor uses 16px text to avoid Safari's focus-zoom behavior.
@@ -37,7 +38,7 @@ Test these interactions:
 
 ## Limitations
 
-- Fullscreen mode is intentionally **not** added: iOS Safari and Better Sidebar host behavior must be verified before offering it.
+- Focus Mode is an in-page overlay, not browser fullscreen. Safari browser chrome remains outside plugin control; validate top-layer and fixed fallback behavior in actual DSH hosts before release.
 - No custom gesture handlers are installed. If touch behavior still fails, diagnose Markmap and the host's pointer/scroll chain before implementing a parallel gesture engine.
 - Running DSH inside a narrow host pane may impose limitations outside this plugin's CSS.
 - A source change is not a verified installation; run `pnpm run check`, rebuild and reinstall the linked plugin, restart DSH Web, and perform manual testing before release.
@@ -53,3 +54,11 @@ Test these interactions:
 - Open a dense map whose default 2x PNG would be at least 2564 × 6599. Export PNG in native Files on desktop and iOS/Android; verify the file opens, contains every visible branch and retains the selected light/dark scheme. If downscaled, check the feedback. Repeat with Better Sidebar enabled and verify SVG remains available even if PNG fails.
 
 - For a reduced PNG export, verify the brief notice overlays the map without reducing its viewport height, disappears after four seconds, and can be closed immediately with ×. Confirm save success also clears automatically, export errors stay until dismissed or replaced, and opening options still works above the notice. Repeat on desktop and check that dismissing does not reset map zoom or folds.
+
+### Mobile First reader acceptance
+
+- Open a 40+ node deep map at 320, 375, 390 and 430px. Verify there is no fixed reader toolbar, both top corner controls are reachable, and Level/Fit do not obscure excessive canvas area.
+- Enter and leave Focus Mode in portrait and landscape, including Escape and switching to Markdown. Verify the same map element remains mounted, folds and draft survive, no host UI is left obscured, and zoom/pan are not reset by the plugin resize handler. Verify fixed fallback in a browser without Popover API.
+- Toggle Overview/Reading; verify dense trees fold only when an explicit opening Level is not selected, small maps are not forcibly folded, and manual pan/zoom cancels the delayed zoom step. Reload and confirm saved reader preference. Fit still fits the current visible tree and All still expands it.
+- Enable auto-hide, wait 4.5s, tap/pan to reveal, then disable via ⋯. Confirm Level/Fit remain available in the menu even while hidden, menu and exit remain reachable, and all hit targets remain 44px or larger.
+- Test a dirty Markdown draft, native export and Better Sidebar save, warnings, errors, export PNG/SVG, multiple tabs and plugin unmount. Check wide desktop toolbar remains unchanged.

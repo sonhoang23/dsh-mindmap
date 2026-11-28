@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Mobile First Mindmap Reader
+
+- Remove the fixed reader toolbar in compact panels; keep Markdown editing, save, export and appearance in the floating menu. Keep Level and Fit visible and retain zoom actions in the menu.
+- Add in-page Focus Mode with a top-layer popover and fixed fallback; keep the existing map mounted, suppress transition refits, and handle Escape and editor exit.
+- Add saved Overview/Reading and optional auto-hide preferences. Reading folds dense maps when no explicit opening Level is saved; preserve manual zoom during viewport changes. Add regression tests and a real-device acceptance matrix.
+- Live iOS Safari, Android Chrome and DSH/Better Sidebar validation remains required.
+
 ## Unreleased — Dismissible feedback
 
 - Show action feedback in a compact overlay without resizing the mindmap viewport. Add a touch-friendly dismiss button, shorten the reduced PNG resolution notice, and auto-dismiss successful action notices after four seconds. Errors and actionable warnings stay until dismissed or replaced.
